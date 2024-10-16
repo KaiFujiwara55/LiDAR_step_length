@@ -30,6 +30,9 @@ for sec in sec_list:
         ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2]+1300, pcd_info_list.get_all_max()[2]+1300), azim=150)
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
+        if "fujiwara_back" in pcd_info_list.dir_name:
+            print("skip")
+            continue
         if False:
             time_cloud = []
             time_area_points_list = []
@@ -106,15 +109,19 @@ for sec in sec_list:
         move_flg_list = ori_method.judge_move(vectros_list)
 
         # グループの中心点の軌跡から、さらにグループ分けを行う
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)
-        ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name, xlim=[0, 25000])
+        # fig = plt.figure(figsize=(10, 10))
+        # ax = fig.add_subplot(111)
+        # ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name, xlim=[0, 25000])
         color_list = ["b", "g", "r", "c", "m", "y", "k"]*10
         
         fit_list = []
+        time_idx_list = []
+        x_list = []
+        y_list = []
         for group_idx in range(len(integraded_area_center_point_list)):
             if move_flg_list[group_idx]:
                 # 中心点のxy座標の移動に対して、近似曲線を取得
+                time_idxs = [time_idx for time_idx, point in enumerate(integraded_area_center_point_list[group_idx]) if len(point)>0]
                 x = [point[0] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
                 y = [point[1] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
 
@@ -123,23 +130,91 @@ for sec in sec_list:
 
                 if len(fit_list)==0:
                     fit_list.append(res[0])
+                    time_idx_list = time_idxs
+                    x_list = x
+                    y_list = y
                 else:
                     if abs(fit_list[-1]-res[0])<1:
                         fit_list.append(res[0])
-                ax.plot(x, y_fit, label=f"group{group_idx}", c=color_list[group_idx])
+                        time_idx_list += time_idxs
+                        x_list += x
+                        y_list += y
 
-        fit = np.mean(fit_list)
-        x_all = np.arange(0, 30000, 1000)
-        y_all = np.poly1d([fit, 0])(x_all)
-        # ax.plot(x_all, y_all, label="fit", c="r")
-        plt.pause(0.1)
-        plt.close()
-        continue
+                # ax.plot(x, y_fit, label=f"group{group_idx}", c=color_list[group_idx])
 
-        # どの時間でどのx座標を取るのかということも考える必要がある
+        before_idx = None
+        no_data = []
+        new_time_idx_list = []
+        new_x_list = []
+        new_y_list = []
+        for idx, time_idx in enumerate(time_idx_list):
+            if before_idx is not None:
+                if time_idx-before_time_idx>1:
+                    x_step = (x_list[idx]-x_list[before_idx])/(time_idx-before_time_idx)
+                    y_step = (y_list[idx]-y_list[before_idx])/(time_idx-before_time_idx)
 
+                    for i in range(1, time_idx-before_time_idx):
+                        no_data.append(time_idx)
+                        new_time_idx_list.append(before_time_idx+i)
+                        new_x_list.append(x_list[before_idx]+x_step*i)
+                        new_y_list.append(y_list[before_idx]+y_step*i)
+            
+            new_time_idx_list.append(time_idx)
+            new_x_list.append(x_list[idx])
+            new_y_list.append(y_list[idx])
+            
+            before_idx = idx
+            before_time_idx = time_idx
 
+        # 改めて処理を行う
+        new_integraded_area_points_list = []
+        new_integraded_area_center_point_list = []
+        for group_idx in range(1):
+            new_integraded_area_points_list.append([])
+            new_integraded_area_center_point_list.append([])
+            
+            for time_idx in range(len(integraded_area_points_list[0])):
+                if time_idx in new_time_idx_list:
+                    idx = new_time_idx_list.index(time_idx)
 
+                    cloud_path = "/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_01s/"+pcd_info_list.dir_name+"/"+str(time_idx+1)+".pcd"
+                    pcd_info_list.load_pcd_from_file(cloud_path)
+                    
+                    cloud = pcd_info_list.cloud
+                    cloud_name = pcd_info_list.dir_name+"_"+str(time_idx+1)
+                        
+                    pcd_info_list.load_pcd_from_cloud(cloud)
+                    down_cloud = def_method.voxel_grid_filter(cloud)
+                    down_points = np.array(down_cloud)
+
+                    base_x = new_x_list[idx]
+                    base_y = new_y_list[idx]
+                    cloud_filtered = def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, -1300, 400)
+                    points_filtered = np.array(cloud_filtered)
+                    points_filtered[:, 2] = points_filtered[:, 2]+1300
+                    center_point = np.mean(points_filtered, axis=0)
+                    
+                    new_integraded_area_points_list[group_idx].append(points_filtered)
+                    new_integraded_area_center_point_list[group_idx].append(center_point)
+
+                    try:
+                        fig = plt.figure()
+                        ax = fig.add_subplot(111, projection="3d")
+                        ax.scatter(points_filtered[:, 0], points_filtered[:, 1], points_filtered[:, 1], s=1)
+                        ax_set.set_ax(ax, cloud_name, zlim=[0, 1600], azim=0, elev=0)
+                        # plt.show()
+                        plt.close()
+                    except:
+                        print(cloud_name)
+                        plt.close()
+                else:
+                    new_integraded_area_points_list[group_idx].append([])
+                    new_integraded_area_center_point_list[group_idx].append([])
+
+        integraded_area_points_list = new_integraded_area_points_list
+        integraded_area_center_point_list = new_integraded_area_center_point_list
+        vectros_list = ori_method.get_vector(integraded_area_center_point_list)
+        move_flg_list = ori_method.judge_move(vectros_list)
 
         # 全体の点群を表示
         if False:
@@ -209,7 +284,7 @@ for sec in sec_list:
                         tmp_point[2] = 0
                         normalized_points = group_point - tmp_point
                         tmp_point = group_point.copy()
-                        tmp_point = tmp_point[np.where(tmp_point[:, 2]>1200) and np.where(tmp_point[:, 2]<1400)]
+                        tmp_point = tmp_point[(tmp_point[:, 2] > 1200) & (tmp_point[:, 2] < 1400)]
                         height = ori_method.get_height(group_point, 40)
                         height = ori_method.get_bentchmark(tmp_point, 0, 100)
 
@@ -335,7 +410,7 @@ for sec in sec_list:
 
                 title = f"{pcd_info_list.dir_name}"
                 ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
-                ax1 = ax_set.set_ax(ax1, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1])
+                ax1 = ax_set.set_ax(ax1, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
                 plt.pause(0.1)
                 plt.close()
 
