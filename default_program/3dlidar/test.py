@@ -19,6 +19,9 @@ for sec in sec_list:
     def_method = default_method.cloud_method()
     ori_method = original_method.original_method()
     for dir in dirs:
+        if "yamazaki" not in dir:
+            print("skip")
+            continue
         # gif作成用のクラスをインスタンス化
         gif = create_gif.create_gif(create_flg=False)
 
@@ -30,9 +33,6 @@ for sec in sec_list:
         ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2]+1300, pcd_info_list.get_all_max()[2]+1300), azim=150)
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
-        if "fujiwara_back" in pcd_info_list.dir_name:
-            print("skip")
-            continue
         if False:
             time_cloud = []
             time_area_points_list = []
@@ -270,14 +270,17 @@ for sec in sec_list:
         # 各時刻の点群を表示、身長データをまとめる
         color_list = ["b", "g", "c", "m", "y", "k"]*10
         heights_lists = {}
-        centers = []
+        centers = {}
+        gif = create_gif.create_gif(create_flg=False)
         for group_idx in range(len(integraded_area_points_list)):
             if move_flg_list[group_idx]:
-                gif = create_gif.create_gif(create_flg=False)
                 heights_list = []
+                new_heights_list = []
                 for time_idx in range(len(integraded_area_points_list[0])):
                     group_point = integraded_area_points_list[group_idx][time_idx]
                     group_center_point = integraded_area_center_point_list[group_idx][time_idx]
+                    new_group_point = new_integraded_area_points_list[0][time_idx]
+                    new_group_center_point = new_integraded_area_center_point_list[0][time_idx]
 
                     if len(group_center_point)>0:
                         tmp_point = group_center_point.copy()
@@ -288,31 +291,54 @@ for sec in sec_list:
                         height = ori_method.get_height(group_point, 40)
                         height = ori_method.get_bentchmark(tmp_point, 0, 100)
 
+                        new_tmp_point = new_group_center_point.copy()
+                        new_tmp_point[2] = 0
+                        new_normalized_points = new_group_point - new_tmp_point
+                        new_tmp_point = new_group_point.copy()
+                        new_tmp_point = new_tmp_point[(new_tmp_point[:, 2] > 1200) & (new_tmp_point[:, 2] < 1400)]
+                        new_height = ori_method.get_height(new_group_point, 40)
+                        new_height = ori_method.get_bentchmark(new_tmp_point, 0, 100)
+
                         fig = plt.figure(figsize=(10, 10))
                         ax0 = fig.add_subplot(121, projection='3d')
                         ax1 = fig.add_subplot(122, projection='3d')
-                        ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+" group:"+str(group_idx)+" time_idx:"+str(time_idx), xlim=[0, 30000], zlim=[-100, 1900], azim=240, elev=90)
+                        # ax2 = fig.add_subplot(224, projection='3d')
+                        ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+" time_idx:"+str(time_idx), xlim=[0, 30000], zlim=[-100, 1900], azim=240, elev=90)
                         ax1 = ax_set.set_ax(ax1, title="point_num:"+str(len(normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
+                        # ax2 = ax_set.set_ax(ax2, title="point_num:"+str(len(new_normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
                         # 10%毎に高さの平均を取得
                         heights = []
+                        new_heights = []
                         for i in range(0, 100, 10):
                             heights.append(ori_method.get_bentchmark(group_point, i, i+10))
+                            new_heights.append(ori_method.get_bentchmark(new_group_point, i, i+10))
                         heights_list.append(heights)
+                        new_heights_list.append(new_heights)
 
-                        ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c="b")
+                        ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c="r")
                         # ax0.scatter(np.array(group_center_point)[0], np.array(group_center_point)[1], height, s=10, c="r")
-                        centers.append(group_center_point)
-                        ax0.scatter(np.array(centers)[:, 0], np.array(centers)[:, 1], np.array(centers)[:, 2], s=10, c="r")
+                        
+                        if group_idx not in centers.keys():
+                            centers[group_idx] = [group_center_point]
+                        else:
+                            centers[group_idx].append(group_center_point)
+                        for key, value in centers.items():
+                            ax0.scatter(np.array(value)[:, 0], np.array(value)[:, 1], np.array(value)[:, 2], s=10, c=color_list[key])
+                        # ax0.scatter(np.array(centers)[:, 0], np.array(centers)[:, 1], np.array(centers)[:, 2], s=10, c=color_list[group_idx])
 
                         ax1.scatter(np.array(normalized_points)[:, 0], np.array(normalized_points)[:, 1], np.array(normalized_points)[:, 2], s=1, c=color_list[group_idx])
                         ax1.scatter(np.zeros(10), np.zeros(10), np.array(heights), s=10, c="r")
+
+                        # ax2.scatter(np.array(new_normalized_points)[:, 0], np.array(new_normalized_points)[:, 1], np.array(new_normalized_points)[:, 2], s=1, c=color_list[group_idx])
+                        # ax2.scatter(np.zeros(10), np.zeros(10), np.array(new_heights), s=10, c="r")
+                        
                         gif.save_fig(fig)
-                        plt.pause(0.1)
+                        # plt.show()
                     else:
                         heights_list.append([])
                     plt.close()
-                gif.create_gif(f"/Users/kai/大学/小川研/LIDAR/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}_goroup{group_idx}_move.gif")
                 heights_lists[group_idx] = heights_list
+        gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}_after_method_move.gif")
 
         # fig = plt.figure(figsize=(10, 10))
         # ax = fig.add_subplot(111)
@@ -364,6 +390,16 @@ for sec in sec_list:
 
 
         # 速度・加速度を取得
+        step_length_accelaration_list = []
+        acc_time_idx_list_list = []
+        time_idx_list_list = []
+        speed_list_list = []
+        acceleration_list_list = []
+        speed_spot_x_list = []
+        speed_spot_y_list = []
+        acceleration_spot_x_list = []
+        acceleration_spot_y_list = []
+
         for group_idx in range(len(move_flg_list)):
             move_flg = move_flg_list[group_idx]
             if move_flg:
@@ -397,6 +433,16 @@ for sec in sec_list:
                 adiff = np.diff(acceleration_list)
                 adiff_sign = ((adiff[:-1] * adiff[1:]) < 0) & (adiff[:-1] > 0)
 
+
+                time_idx_list_list += time_idx_list
+                acc_time_idx_list_list += time_idx_list[1:]
+                speed_list_list += speed_list
+                acceleration_list_list += acceleration_list
+                speed_spot_x_list += np.array(time_idx_list[1:-1])[sdiff_sign].tolist()
+                speed_spot_y_list += np.array(speed_list[1:-1])[sdiff_sign].tolist()
+                acceleration_spot_x_list += np.array(time_idx_list[2:-1])[adiff_sign].tolist()
+                acceleration_spot_y_list += np.array(acceleration_list[1:-1])[adiff_sign].tolist()
+
                 # 速度・加速度のグラフを表示
                 fig = plt.figure(figsize=(10, 10))
                 ax0 = fig.add_subplot(211)
@@ -411,7 +457,7 @@ for sec in sec_list:
                 title = f"{pcd_info_list.dir_name}"
                 ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
                 ax1 = ax_set.set_ax(ax1, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
-                plt.pause(0.1)
+                # plt.pause(0.1)
                 plt.close()
 
                 print("加速度を用いた歩幅の推定")
@@ -428,8 +474,26 @@ for sec in sec_list:
                 for i in range(len(points)-1):
                     step_length = ori_method.calc_points_distance(points[i], points[i+1])
                     print(f"step_length : {step_length}")
+                    step_length_accelaration_list.append(step_length)
+        
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(211)
+        ax.plot(time_idx_list_list, speed_list_list)
+        ax.plot(time_idx_list_list, speed_list_list, "o")
+        ax.plot(speed_spot_x_list, speed_spot_y_list, "o", c="g")
+        ax2 = fig.add_subplot(212)
+        ax2.plot(acc_time_idx_list_list, acceleration_list_list)
+        ax2.plot(acc_time_idx_list_list, acceleration_list_list, "o")
+        ax2.plot(acceleration_spot_x_list, acceleration_spot_y_list, "o", c="g")
+        ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
+        ax2 = ax_set.set_ax(ax2, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
+
+        plt.show()
+        plt.close()
+
 
         # 中心点の高さ情報の変化を取得
+        step_length_height_list = []
         for group_idx in range(len(move_flg_list)):
             move_flg = move_flg_list[group_idx]
             if move_flg:
@@ -474,4 +538,25 @@ for sec in sec_list:
                     point2 = np.array([points[i+1][0], points[i+1][1], 0])
                     step_length = ori_method.calc_points_distance(point1, point2)
                     print(f"step_length : {step_length}")
+                    step_length_height_list.append(step_length)
 
+        # 箱ひげ図を表示
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111)
+        ax.boxplot([step_length_accelaration_list, step_length_height_list], labels=["acceleration", "height"])
+        # ax_set.set_ax(ax, title=pcd_info_list.dir_name, ylabel="step_length (cm)")
+        ax.set_title(pcd_info_list.dir_name)
+        ax.set_ylim(0, 1100)
+        plt.show()
+        plt.close()
+
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(211)
+        ax.hist(step_length_accelaration_list, bins=55, range=(0, 1100), label="acceleration")
+        ax2 = fig.add_subplot(212)
+        ax2.hist(step_length_height_list, bins=55, range=(200, 1100), label="height")
+        ax.set_title(pcd_info_list.dir_name+"\nacceleration")
+        ax2.set_title("height")
+
+        plt.show()
+        plt.close()
