@@ -20,7 +20,7 @@ class get_pcd_information:
         points_list = []
         cloud_name_list = []
         for file_path in file_paths:
-            self.load_pcd(file_path)
+            self.load_pcd_from_file(file_path)
             cloud_list.append(self.cloud)
             points_list.append(self.points)
             cloud_name_list.append("_".join(file_path.split("/")[-2:]).split(".")[0])
@@ -38,13 +38,21 @@ class get_pcd_information:
 
         return file_paths
 
-    def load_pcd(self, file_path):
+    def load_pcd_from_file(self, file_path):
         """PCDファイルの読み込み"""
         cloud = pcl.load(file_path)
         points = np.array(cloud)
 
         self.cloud = cloud
         self.points = points
+
+    def load_pcd_from_cloud(self, cloud):
+        """PCDファイルの読み込み"""
+        points = np.array(cloud)
+
+        self.cloud = cloud
+        self.points = points
+
 
     def get_all_max(self):
         """時系列分のPCDファイル内での点群の座標の最大値を取得"""
