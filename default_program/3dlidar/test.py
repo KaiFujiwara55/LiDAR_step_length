@@ -13,14 +13,13 @@ import create_gif
 # sec_list = ["015", "02", "025", "03"]
 sec_list = ["01"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LIDAR/20241011/pcd/pcd_{sec}s/*")
-    
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_{sec}s/*")
+
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
-    ori_method = original_method.original_method()
+    ori_method = original_method.cloud_method()
     for dir in dirs:
-        if "yamazaki" not in dir:
-            print("skip")
+        if "fujiwara" in dir:
             continue
         # gif作成用のクラスをインスタンス化
         gif = create_gif.create_gif(create_flg=False)
@@ -30,7 +29,7 @@ for sec in sec_list:
         pcd_info_list.load_pcd_dir(dir)
         # plot用のaxのdefault設定
         ax_set = plot.set_plot()
-        ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2]+1300, pcd_info_list.get_all_max()[2]+1300), azim=150)
+        ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
         if False:
@@ -39,7 +38,13 @@ for sec in sec_list:
             time_area_center_point_list = []
             count = 0
             start = time.time()
+
+            # LiDAR自体の傾きを取得
+            theta_x, theta_y, theta_z = ori_method.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
             for cloud, cloud_name in zip(pcd_info_list.cloud_list, pcd_info_list.cloud_name_list):
+                # LiDAR自体の傾きを補正
+                cloud = def_method.rotate_cloud(cloud, -theta_x, theta_y)
+
                 source_cloud = cloud
                 filtered_cloud = cloud
 
@@ -97,10 +102,14 @@ for sec in sec_list:
             print(f"処理時間 : {time.time()-start}")
 
             # 処理結果を保存
-            ori_method.save_original_data(time_area_points_list, time_area_center_point_list, output_path=f"{pcd_info_list.dir_name}_{sec}s")
+            area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
+            center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
+            ori_method.save_original_data(time_area_points_list, time_area_center_point_list, area_path, center_path)
 
         # 処理結果を読み込み
-        time_area_points_list, time_area_center_point_list = ori_method.load_original_data(load_path=f"{pcd_info_list.dir_name}_{sec}s")
+        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
+        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
+        time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
 
         # 点群をグループ化
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
@@ -190,8 +199,8 @@ for sec in sec_list:
                     base_x = new_x_list[idx]
                     base_y = new_y_list[idx]
                     cloud_filtered = def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, -1300, 400)
+                    print(cloud_filtered)
                     points_filtered = np.array(cloud_filtered)
-                    points_filtered[:, 2] = points_filtered[:, 2]+1300
                     center_point = np.mean(points_filtered, axis=0)
                     
                     new_integraded_area_points_list[group_idx].append(points_filtered)
@@ -202,7 +211,7 @@ for sec in sec_list:
                         ax = fig.add_subplot(111, projection="3d")
                         ax.scatter(points_filtered[:, 0], points_filtered[:, 1], points_filtered[:, 1], s=1)
                         ax_set.set_ax(ax, cloud_name, zlim=[0, 1600], azim=0, elev=0)
-                        # plt.show()
+                        plt.show()
                         plt.close()
                     except:
                         print(cloud_name)
@@ -217,7 +226,7 @@ for sec in sec_list:
         move_flg_list = ori_method.judge_move(vectros_list)
 
         # 全体の点群を表示
-        if False:
+        if True:
             gif = create_gif.create_gif(create_flg=True)
             color_list = ["b", "g", "r", "c", "m", "y", "k", "w"]*10
             for time_idx in range(len(integraded_area_points_list[0])):
@@ -235,10 +244,10 @@ for sec in sec_list:
                         ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c=color_list[group_idx])
                         ax1.scatter(np.array(group_center_point)[0], np.array(group_center_point)[1], s=10, c=color_list[group_idx])
 
-                # plt.pause(0.1)
+                plt.pause(0.1)
                 gif.save_fig(fig)
                 plt.close()
-            gif.create_gif(f"/Users/kai/大学/小川研/LIDAR/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}.gif")
+            gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}.gif")
 
 
         # 重ね合わせた点群を作成

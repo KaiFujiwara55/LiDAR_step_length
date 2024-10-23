@@ -4,12 +4,12 @@ import glob
 import pcl
 import default_method
 
-class original_method:
+class cloud_method:
     """3次元点群処理のオリジナルな処理をまとめたクラス"""
     def __init__(self):
         self.def_method = default_method.cloud_method()
 
-    def save_original_data(self, time_area_points_list, time_area_center_point_list, output_path):
+    def save_original_data(self, time_area_points_list, time_area_center_point_list, area_path, center_path):
         """
         時系列の点群のグループを保存
         引数:
@@ -18,20 +18,20 @@ class original_method:
         返り値:
             None
         """
-        os.makedirs(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_center_point_list/{output_path}", exist_ok=True)
-        os.makedirs(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_points_list/{output_path}", exist_ok=True)
+        os.makedirs(area_path, exist_ok=True)
+        os.makedirs(center_path, exist_ok=True)
         for time_idx in range(len(time_area_points_list)):
             center_points = time_area_center_point_list[time_idx]
-            with open(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_center_point_list/{output_path}/{time_idx}.txt", "w") as f:
+            with open(f"{center_path}/{time_idx}.txt", "w") as f:
                 for center_point in center_points:
                     f.write(f"{center_point[0]} {center_point[1]} {center_point[2]}\n")
             for group_idx in range(len(time_area_points_list[time_idx])):
                 area_points = time_area_points_list[time_idx][group_idx]
-                with open(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_points_list/{output_path}/{time_idx}_{group_idx}.txt", "w") as f:
+                with open(f"{area_path}/{time_idx}_{group_idx}.txt", "w") as f:
                     for area_point in area_points:
                         f.write(f"{area_point[0]} {area_point[1]} {area_point[2]}\n")
 
-    def load_original_data(self, load_path):
+    def load_original_data(self, area_path, center_path):
         """
         時系列の点群のグループを読み込み
         引数:
@@ -40,21 +40,21 @@ class original_method:
             time_area_points_list: list
             time_area_center_point_list: list
         """
-        time_idxs = len(glob.glob(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_center_point_list/{load_path}/*"))
+        time_idxs = len(glob.glob(f"{center_path}/*"))
 
         time_area_points_list = []
         time_area_center_point_list = []
         for time_idx in range(time_idxs):
             center_points = []
-            with open(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_center_point_list/{load_path}/{time_idx}.txt", "r") as f:
+            with open(f"{center_path}/{time_idx}.txt", "r") as f:
                 for line in f:
                     center_point = [float(x) for x in line.split()]
                     center_points.append(np.array(center_point, dtype=np.float32))
             area_points_list = []
-            group_idxs = len(glob.glob(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_points_list/{load_path}/{time_idx}_*"))
+            group_idxs = len(glob.glob(f"{area_path}/{time_idx}_*"))
             for group_idx in range(group_idxs):
                 area_points = []
-                with open(f"/Users/kai/大学/小川研/LIDAR/default_program/3dlidar/tmp_folder/time_area_points_list/{load_path}/{time_idx}_{group_idx}.txt", "r") as f:
+                with open(f"{area_path}/{time_idx}_{group_idx}.txt", "r") as f:
                     for line in f:
                         area_point = [float(x) for x in line.split()]
                         area_points.append(area_point)
@@ -62,6 +62,43 @@ class original_method:
             time_area_points_list.append(area_points_list)
             time_area_center_point_list.append(center_points)
         return time_area_points_list, time_area_center_point_list
+
+    def cloud_get_tilt(self, pcd_info_list, upper_threshold=2000):
+        """
+        天井を抽出し、LiDAR自体の傾きを取得
+        引数:
+            pcd_info_list: get_pcd_information.get_pcd_information
+            upper_threshold: int
+        返り値:
+            theta_x: float
+            theta_y: float
+            theta_z: float
+        """
+        all_points = None
+        for points in pcd_info_list.points_list:
+            if all_points is None:
+                all_points = points
+            else:
+                all_points = np.concatenate([all_points, points], axis=0)
+
+        # ダウンサンプリング
+        cloud = pcl.PointCloud()
+        cloud.from_array(all_points)
+        grid_filtered_cloud = self.def_method.voxel_grid_filter(cloud)
+
+        # upper_threshold以下の点群を除去
+        upper_cloud = self.def_method.filter_area(grid_filtered_cloud, z_min=upper_threshold)
+
+        # 天井を抽出
+        ksearch = 50
+        distance_threshold = 50
+        cloud_plane, cloud_non_plane, coefficients, indices = self.def_method.segment_plane(upper_cloud, ksearch, distance_threshold)
+
+        theta_x = np.arctan(-1*(coefficients[1]/coefficients[2]))
+        theta_y = np.arctan(-1*(coefficients[0]/coefficients[2]))
+        theta_z = np.arctan(-1*(coefficients[0]/coefficients[1]))
+
+        return theta_x, theta_y, theta_z
 
     def calc_points_distance(self, points1, points2):
         """
@@ -148,12 +185,15 @@ class original_method:
             # 時系列の中心点のlistを取得
             area_points_list = time_area_points_list[time_idx]
             area_center_point_list = time_area_center_point_list[time_idx]
+            print(len(area_points_list))
+            print(area_center_point_list)
             
             theshold = 250
 
             # tmp_mis = [[gropu_idx, [group_idx2, diff1]], group_idx, [group_idx2, diff2]...]
             tmp_mins = []
             for group_idx in range(len(area_points_list)):
+                print(f"{time_idx} {group_idx}")
                 # 各時刻，各グループの中心座標に対して処理を行う
                 area_center_point_xy = area_center_point_list[group_idx]
                 area_center_point_xy[2] = 0
@@ -315,3 +355,6 @@ class original_method:
         bench_height = np.mean(z[int(len(z)*min_percent/100):int(len(z)*max_percent/100)])
         
         return bench_height
+
+    def grouping_points_list_2(self, integraded_area_center_point_list, step_time):
+        pass

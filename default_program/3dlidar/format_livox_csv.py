@@ -8,11 +8,11 @@ from tqdm import tqdm
 # 変数の指定
 ##############################
 # 読み込むスキャンデータのパス, フォルダパスでも可
-scan_data_path = "./20241011/source/*.csv"
+scan_data_path = "./20241018/*.csv"
 # 出力するcsvフォルダのパス
-output_data_path = "./20241011/filtered/"
+output_data_path = "./20241018/csv/"
 # 出力するcsvフォルダのパスの区切り文字
-split_char = "source/"
+split_char = "20241018/"
 ##############################
 
 def format_livox_csv(scan_data_file, tmp_output_data_path):
