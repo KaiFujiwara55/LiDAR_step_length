@@ -256,3 +256,50 @@ class cloud_method:
         cloud_filtered = cloud.extract(indices)
 
         return cloud_filtered
+
+    def rotate_cloud(self, cloud, theta_x=0, theta_y=0, theta_z=0):
+        """
+        3次元点群の回転
+        引数:
+            cloud: pcl.PointCloud
+            theta_x: float (radian)
+            theta_y: float (radian)
+            theta_z: float (radian)
+        返り値:
+            rot_pointcloud: np.array
+            rot_matrix: np.array
+        
+        theta_x: x軸周りの回転角度
+        theta_y: y軸周りの回転角度
+        theta_z: z軸周りの回転角度
+        
+        https://tech-deliberate-jiro.com/pcl-rot/
+        """
+
+        points = np.array(cloud)
+
+        rot_x = np.array(
+            [[ 1, 0, 0],
+            [ 0, np.cos(theta_x), -np.sin(theta_x)],
+            [ 0, np.sin(theta_x),  np.cos(theta_x)]]
+            )
+
+        rot_y = np.array(
+            [[ np.cos(theta_y), 0, np.sin(theta_y)],
+            [0, 1, 0],
+            [-np.sin(theta_y), 0, np.cos(theta_y)]]
+            )
+
+        rot_z = np.array(
+            [[ np.cos(theta_z), -np.sin(theta_z), 0],
+            [ np.sin(theta_z), np.cos(theta_z), 0],
+            [0, 0, 1]]
+            )
+
+        rot_matrix = rot_z.dot(rot_y.dot(rot_x))
+        rot_points = rot_matrix.dot(points.T).T
+        
+        rot_cloud = pcl.PointCloud()
+        rot_cloud.from_array(rot_points.astype(np.float32))
+
+        return rot_cloud
