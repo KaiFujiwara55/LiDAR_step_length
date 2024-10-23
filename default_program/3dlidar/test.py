@@ -191,15 +191,18 @@ for sec in sec_list:
                     
                     cloud = pcd_info_list.cloud
                     cloud_name = pcd_info_list.dir_name+"_"+str(time_idx+1)
-                        
+                    # 高さの補正
+                    points = np.array(cloud)
+                    points[:, 2] = points[:, 2] + 1300
+                    cloud = def_method.get_cloud(points)
+
                     pcd_info_list.load_pcd_from_cloud(cloud)
                     down_cloud = def_method.voxel_grid_filter(cloud)
                     down_points = np.array(down_cloud)
 
                     base_x = new_x_list[idx]
                     base_y = new_y_list[idx]
-                    cloud_filtered = def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, -1300, 400)
-                    print(cloud_filtered)
+                    cloud_filtered = def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
                     points_filtered = np.array(cloud_filtered)
                     center_point = np.mean(points_filtered, axis=0)
                     
@@ -211,7 +214,7 @@ for sec in sec_list:
                         ax = fig.add_subplot(111, projection="3d")
                         ax.scatter(points_filtered[:, 0], points_filtered[:, 1], points_filtered[:, 1], s=1)
                         ax_set.set_ax(ax, cloud_name, zlim=[0, 1600], azim=0, elev=0)
-                        plt.show()
+                        # plt.show()
                         plt.close()
                     except:
                         print(cloud_name)
@@ -226,8 +229,8 @@ for sec in sec_list:
         move_flg_list = ori_method.judge_move(vectros_list)
 
         # 全体の点群を表示
-        if True:
-            gif = create_gif.create_gif(create_flg=True)
+        if False:
+            gif = create_gif.create_gif(create_flg=False)
             color_list = ["b", "g", "r", "c", "m", "y", "k", "w"]*10
             for time_idx in range(len(integraded_area_points_list[0])):
                 fig = plt.figure(figsize=(10, 10))
@@ -244,7 +247,7 @@ for sec in sec_list:
                         ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c=color_list[group_idx])
                         ax1.scatter(np.array(group_center_point)[0], np.array(group_center_point)[1], s=10, c=color_list[group_idx])
 
-                plt.pause(0.1)
+                plt.show()
                 gif.save_fig(fig)
                 plt.close()
             gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}.gif")
@@ -277,77 +280,77 @@ for sec in sec_list:
         
         
         # 各時刻の点群を表示、身長データをまとめる
-        color_list = ["b", "g", "c", "m", "y", "k"]*10
-        heights_lists = {}
-        centers = {}
-        gif = create_gif.create_gif(create_flg=False)
-        for group_idx in range(len(integraded_area_points_list)):
-            if move_flg_list[group_idx]:
-                heights_list = []
-                new_heights_list = []
-                for time_idx in range(len(integraded_area_points_list[0])):
-                    group_point = integraded_area_points_list[group_idx][time_idx]
-                    group_center_point = integraded_area_center_point_list[group_idx][time_idx]
-                    new_group_point = new_integraded_area_points_list[0][time_idx]
-                    new_group_center_point = new_integraded_area_center_point_list[0][time_idx]
+        # color_list = ["b", "g", "c", "m", "y", "k"]*10
+        # heights_lists = {}
+        # centers = {}
+        # gif = create_gif.create_gif(create_flg=False)
+        # for group_idx in range(len(integraded_area_points_list)):
+        #     if move_flg_list[group_idx]:
+        #         heights_list = []
+        #         new_heights_list = []
+        #         for time_idx in range(len(integraded_area_points_list[0])):
+        #             group_point = integraded_area_points_list[group_idx][time_idx]
+        #             group_center_point = integraded_area_center_point_list[group_idx][time_idx]
+        #             new_group_point = new_integraded_area_points_list[0][time_idx]
+        #             new_group_center_point = new_integraded_area_center_point_list[0][time_idx]
 
-                    if len(group_center_point)>0:
-                        tmp_point = group_center_point.copy()
-                        tmp_point[2] = 0
-                        normalized_points = group_point - tmp_point
-                        tmp_point = group_point.copy()
-                        tmp_point = tmp_point[(tmp_point[:, 2] > 1200) & (tmp_point[:, 2] < 1400)]
-                        height = ori_method.get_height(group_point, 40)
-                        height = ori_method.get_bentchmark(tmp_point, 0, 100)
+        #             if len(group_center_point)>0:
+        #                 tmp_point = group_center_point.copy()
+        #                 tmp_point[2] = 0
+        #                 normalized_points = group_point - tmp_point
+        #                 tmp_point = group_point.copy()
+        #                 tmp_point = tmp_point[(tmp_point[:, 2] > 1200) & (tmp_point[:, 2] < 1400)]
+        #                 height = ori_method.get_height(group_point, 40)
+        #                 height = ori_method.get_bentchmark(tmp_point, 0, 100)
 
-                        new_tmp_point = new_group_center_point.copy()
-                        new_tmp_point[2] = 0
-                        new_normalized_points = new_group_point - new_tmp_point
-                        new_tmp_point = new_group_point.copy()
-                        new_tmp_point = new_tmp_point[(new_tmp_point[:, 2] > 1200) & (new_tmp_point[:, 2] < 1400)]
-                        new_height = ori_method.get_height(new_group_point, 40)
-                        new_height = ori_method.get_bentchmark(new_tmp_point, 0, 100)
+        #                 new_tmp_point = new_group_center_point.copy()
+        #                 new_tmp_point[2] = 0
+        #                 new_normalized_points = new_group_point - new_tmp_point
+        #                 new_tmp_point = new_group_point.copy()
+        #                 new_tmp_point = new_tmp_point[(new_tmp_point[:, 2] > 1200) & (new_tmp_point[:, 2] < 1400)]
+        #                 new_height = ori_method.get_height(new_group_point, 40)
+        #                 new_height = ori_method.get_bentchmark(new_tmp_point, 0, 100)
 
-                        fig = plt.figure(figsize=(10, 10))
-                        ax0 = fig.add_subplot(121, projection='3d')
-                        ax1 = fig.add_subplot(122, projection='3d')
-                        # ax2 = fig.add_subplot(224, projection='3d')
-                        ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+" time_idx:"+str(time_idx), xlim=[0, 30000], zlim=[-100, 1900], azim=240, elev=90)
-                        ax1 = ax_set.set_ax(ax1, title="point_num:"+str(len(normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
-                        # ax2 = ax_set.set_ax(ax2, title="point_num:"+str(len(new_normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
-                        # 10%毎に高さの平均を取得
-                        heights = []
-                        new_heights = []
-                        for i in range(0, 100, 10):
-                            heights.append(ori_method.get_bentchmark(group_point, i, i+10))
-                            new_heights.append(ori_method.get_bentchmark(new_group_point, i, i+10))
-                        heights_list.append(heights)
-                        new_heights_list.append(new_heights)
+        #                 fig = plt.figure(figsize=(10, 10))
+        #                 ax0 = fig.add_subplot(121, projection='3d')
+        #                 ax1 = fig.add_subplot(122, projection='3d')
+        #                 # ax2 = fig.add_subplot(224, projection='3d')
+        #                 ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+" time_idx:"+str(time_idx), xlim=[0, 30000], zlim=[-100, 1900], azim=240, elev=90)
+        #                 ax1 = ax_set.set_ax(ax1, title="point_num:"+str(len(normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
+        #                 # ax2 = ax_set.set_ax(ax2, title="point_num:"+str(len(new_normalized_points)), xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
+        #                 # 10%毎に高さの平均を取得
+        #                 heights = []
+        #                 new_heights = []
+        #                 for i in range(0, 100, 10):
+        #                     heights.append(ori_method.get_bentchmark(group_point, i, i+10))
+        #                     new_heights.append(ori_method.get_bentchmark(new_group_point, i, i+10))
+        #                 heights_list.append(heights)
+        #                 new_heights_list.append(new_heights)
 
-                        ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c="r")
-                        # ax0.scatter(np.array(group_center_point)[0], np.array(group_center_point)[1], height, s=10, c="r")
+        #                 ax0.scatter(np.array(group_point)[:, 0], np.array(group_point)[:, 1], np.array(group_point)[:, 2], s=1, c="r")
+        #                 # ax0.scatter(np.array(group_center_point)[0], np.array(group_center_point)[1], height, s=10, c="r")
                         
-                        if group_idx not in centers.keys():
-                            centers[group_idx] = [group_center_point]
-                        else:
-                            centers[group_idx].append(group_center_point)
-                        for key, value in centers.items():
-                            ax0.scatter(np.array(value)[:, 0], np.array(value)[:, 1], np.array(value)[:, 2], s=10, c=color_list[key])
-                        # ax0.scatter(np.array(centers)[:, 0], np.array(centers)[:, 1], np.array(centers)[:, 2], s=10, c=color_list[group_idx])
+        #                 if group_idx not in centers.keys():
+        #                     centers[group_idx] = [group_center_point]
+        #                 else:
+        #                     centers[group_idx].append(group_center_point)
+        #                 for key, value in centers.items():
+        #                     ax0.scatter(np.array(value)[:, 0], np.array(value)[:, 1], np.array(value)[:, 2], s=10, c=color_list[key])
+        #                 # ax0.scatter(np.array(centers)[:, 0], np.array(centers)[:, 1], np.array(centers)[:, 2], s=10, c=color_list[group_idx])
 
-                        ax1.scatter(np.array(normalized_points)[:, 0], np.array(normalized_points)[:, 1], np.array(normalized_points)[:, 2], s=1, c=color_list[group_idx])
-                        ax1.scatter(np.zeros(10), np.zeros(10), np.array(heights), s=10, c="r")
+        #                 ax1.scatter(np.array(normalized_points)[:, 0], np.array(normalized_points)[:, 1], np.array(normalized_points)[:, 2], s=1, c=color_list[group_idx])
+        #                 ax1.scatter(np.zeros(10), np.zeros(10), np.array(heights), s=10, c="r")
 
-                        # ax2.scatter(np.array(new_normalized_points)[:, 0], np.array(new_normalized_points)[:, 1], np.array(new_normalized_points)[:, 2], s=1, c=color_list[group_idx])
-                        # ax2.scatter(np.zeros(10), np.zeros(10), np.array(new_heights), s=10, c="r")
+        #                 # ax2.scatter(np.array(new_normalized_points)[:, 0], np.array(new_normalized_points)[:, 1], np.array(new_normalized_points)[:, 2], s=1, c=color_list[group_idx])
+        #                 # ax2.scatter(np.zeros(10), np.zeros(10), np.array(new_heights), s=10, c="r")
                         
-                        gif.save_fig(fig)
-                        # plt.show()
-                    else:
-                        heights_list.append([])
-                    plt.close()
-                heights_lists[group_idx] = heights_list
-        gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}_after_method_move.gif")
+        #                 gif.save_fig(fig)
+        #                 # plt.show()
+        #             else:
+        #                 heights_list.append([])
+        #             plt.close()
+        #         heights_lists[group_idx] = heights_list
+        # gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}_after_method_move.gif")
 
         # fig = plt.figure(figsize=(10, 10))
         # ax = fig.add_subplot(111)
@@ -497,7 +500,7 @@ for sec in sec_list:
         ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
         ax2 = ax_set.set_ax(ax2, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
 
-        plt.show()
+        # plt.show()
         plt.close()
 
 
