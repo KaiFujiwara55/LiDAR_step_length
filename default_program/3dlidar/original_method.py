@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import pcl
 import default_method
+import get_pcd_information
 
 class cloud_method:
     """3次元点群処理のオリジナルな処理をまとめたクラス"""
@@ -269,16 +270,41 @@ class cloud_method:
         for group_idx in range(len(integraded_area_center_point_list)):
             vectors = []
             for time_idx in range(1, len(integraded_area_center_point_list[0])):
-                before_center_point = integraded_area_center_point_list[group_idx][time_idx-1]
-                after_center_point = integraded_area_center_point_list[group_idx][time_idx]
+                before_bentch_point = integraded_area_center_point_list[group_idx][time_idx-1]
+                after_bentch_point = integraded_area_center_point_list[group_idx][time_idx]
 
-                if len(before_center_point)==0 and len(after_center_point)==0:
+                if len(before_bentch_point)==0 and len(after_bentch_point)==0:
                     vectors.append([])
-                elif len(before_center_point)==0 and len(after_center_point)>0:
+                elif len(before_bentch_point)==0 and len(after_bentch_point)>0:
                     vectors.append([])
-                elif len(before_center_point)>0 and len(after_center_point)>0:
-                    vectors.append(after_center_point - before_center_point)
-                elif len(before_center_point)>0 and len(after_center_point)==0:
+                elif len(before_bentch_point)>0 and len(after_bentch_point)>0:
+                    vectors.append(after_bentch_point - before_bentch_point)
+                elif len(before_bentch_point)>0 and len(after_bentch_point)==0:
+                    vectors.append([])
+            vectors_list.append(vectors)
+        
+        return vectors_list
+    
+    def get_vector_2(self, integraded_area_points_list, percent=None, height=None):
+        """
+        統合された点群のグループの中心点からベクトルを取得
+        引数:
+            integraded_area_center_point_list: list
+        返り値:
+            vector_list: list
+        """
+        vectors_list = []
+        for group_idx in range(len(integraded_area_points_list)):
+            vectors = []
+            for time_idx in range(1, len(integraded_area_points_list[group_idx])):
+                before_count = len(integraded_area_points_list[group_idx][time_idx-1])
+                after_count = len(integraded_area_points_list[group_idx][time_idx])
+
+                if before_count>0 and after_count>0:
+                    before_bentch_point = self.get_bentchmark(integraded_area_points_list[group_idx][time_idx-1], percent, height)
+                    after_bentch_point = self.get_bentchmark(integraded_area_points_list[group_idx][time_idx], percent, height)
+                    vectors.append(after_bentch_point - before_bentch_point)
+                else:
                     vectors.append([])
             vectors_list.append(vectors)
         
@@ -329,31 +355,30 @@ class cloud_method:
         
         return height
 
-    def get_bentchmark(self, points, min_percent, max_percent):
+    def get_bentchmark(self, points, percent=None, height=None):
         """
         点群のある領域の高さの平均値を取得
         引数:
             points: np.array
-            min_percent: float
-            max_percent: float
+            percent: list [min_percent, max_percent]
+            height: list [min_height, max_height]
         返り値:
             bench_height: float
 
         points: 点群
-        min_percent: 下位何%までの点の平均を高さとするか(0が底辺)
-        max_percent: 上位何%までの点の平均を高さとするか(100が最大値)
-
+        percent: 下位何%から上位何%までの点の平均を高さとするか
+        height: 下限と上限の高さ間の点の平均を高さとするか
         """
-        # 点群のz座標を取得
-        z = points[:, 2]
-        
-        
-        z = np.sort(z)
-        bench_height = np.mean(z[int(len(z)*min_percent/100):int(len(z)*max_percent/100)])
-        
-        return bench_height
+        points_sort = points[np.argsort(points[:, 2])]
 
-    def grouping_points_list_2(self, pcd_info_list, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.1):
+        if percent is not None:
+            bench_point = np.mean(points_sort[int(len(points_sort)*percent[0]/100):int(len(points_sort)*percent[1]/100)], axis=0)
+        else:
+            bench_point = np.mean(points_sort[(points_sort[:, 2]>height[0]) & (points_sort[:, 2]<height[1])], axis=0)
+        
+        return bench_point
+
+    def grouping_points_list_2(self, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.1):
         fit_list = []
         time_idx_list = []
         x_list = []
@@ -435,6 +460,12 @@ class cloud_method:
 
         new_integraded_area_points_list = [] 
         new_integraded_area_center_point_list = []
+
+        # 傾きを取得
+        pcd_info_list = get_pcd_information.get_pcd_information()
+        pcd_info_list.load_pcd_dir(cloud_folder_path)
+        theta_x, theta_y, theta_z = self.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
+
         for group_idx in range(1):
             new_integraded_area_points_list.append([])
             new_integraded_area_center_point_list.append([])
@@ -445,24 +476,28 @@ class cloud_method:
                     if time_idx in new_time_idx_list_2:
                         idx_2 = new_time_idx_list_2.index(time_idx)
                         cloud_path = f"{cloud_folder_path}/{str(int(time_idx*(0.1/sec)+1))}.pcd"
-                        pcd_info_list.load_pcd_from_file(cloud_path)
-                        
-                        cloud = pcd_info_list.cloud
+                        cloud = pcl.load(cloud_path)
+
+                        # 傾きの補正
+                        cloud = self.def_method.rotate_cloud(cloud, -theta_x, theta_y)
                         # 高さの補正
                         points = np.array(cloud)
                         points[:, 2] = points[:, 2] + 1300
                         cloud = self.def_method.get_cloud(points)
 
-                        pcd_info_list.load_pcd_from_cloud(cloud)
-
-                        base_x = new_x_list[idx_2]
-                        base_y = new_y_list[idx_2]
+                        base_x = new_x_list_2[idx_2]
+                        base_y = new_y_list_2[idx_2]
                         cloud_filtered = self.def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
-                        points_filtered = np.array(cloud_filtered)
-                        center_point = np.mean(points_filtered, axis=0)
                         
-                        new_integraded_area_points_list[group_idx].append(points_filtered)
-                        new_integraded_area_center_point_list[group_idx].append(center_point)
+                        if cloud_filtered.size>0:
+                            points_filtered = np.array(cloud_filtered)
+                            center_point = np.mean(points_filtered, axis=0)
+                            
+                            new_integraded_area_points_list[group_idx].append(points_filtered)
+                            new_integraded_area_center_point_list[group_idx].append(center_point)
+                        else:
+                            new_integraded_area_points_list[group_idx].append([])
+                            new_integraded_area_center_point_list[group_idx].append([])
                     else:
                         new_integraded_area_points_list[group_idx].append([])
                         new_integraded_area_center_point_list[group_idx].append([])

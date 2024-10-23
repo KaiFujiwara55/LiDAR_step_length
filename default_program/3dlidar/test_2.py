@@ -13,7 +13,7 @@ import create_gif
 # sec_list = ["015", "02", "025", "03"]
 sec_list = ["01"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_{sec}s/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd_{sec}s/*")
 
     def_method = default_method.cloud_method()
     org_method = original_method.cloud_method()
@@ -52,6 +52,13 @@ for sec in sec_list:
         ax = fig.add_subplot(111, projection='3d')
         ax = ax_set.set_ax(ax)
         ax.scatter(upper_points[:, 0], upper_points[:, 1], upper_points[:, 2], s=1, c="red")
+        plt.show()
+        plt.close()
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax = ax_set.set_ax(ax)
+        ax.scatter(upper_points[:, 0], upper_points[:, 1], upper_points[:, 2], s=1, c="red")
         # plt.show()
         plt.close()
 
@@ -71,6 +78,9 @@ for sec in sec_list:
 
         ax1.plot(np.linspace(-500, 500, 100), -1*(coefficients[1]/coefficients[2])*np.linspace(-500, 500, 100)-coefficients[3]/coefficients[2], c="red")
         ax2.plot(np.linspace(0, 40000, 100), -1*(coefficients[0]/coefficients[2])*np.linspace(0, 40000, 100)-coefficients[3]/coefficients[2], c="red")
+
+        ax1.set_box_aspect(1)
+        ax2.set_box_aspect(1)
 
         plt.show()
         plt.close()
@@ -117,6 +127,9 @@ for sec in sec_list:
         ax1.plot(np.linspace(-500, 500, 100), -1*(coefficients[1]/coefficients[2])*np.linspace(-500, 500, 100)-coefficients[3]/coefficients[2], c="red")
         ax2.plot(np.linspace(0, 40000, 100), -1*(coefficients[0]/coefficients[2])*np.linspace(0, 40000, 100)-coefficients[3]/coefficients[2], c="red")
 
+        ax1.set_box_aspect(1)
+        ax2.set_box_aspect(1)
+        
         plt.show()
         plt.close()
         print()

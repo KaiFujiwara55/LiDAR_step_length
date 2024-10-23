@@ -13,13 +13,13 @@ import create_gif
 # sec_list = ["015", "02", "025", "03"]
 sec_list = ["01"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_{sec}s/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd_{sec}s/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
     ori_method = original_method.cloud_method()
     for dir in dirs:
-        if "fujiwara" in dir:
+        if "fujiwara" in dir or "front" in dir:
             continue
         # gif作成用のクラスをインスタンス化
         gif = create_gif.create_gif(create_flg=False)
@@ -102,134 +102,25 @@ for sec in sec_list:
             print(f"処理時間 : {time.time()-start}")
 
             # 処理結果を保存
-            area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
-            center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
+            area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
+            center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
             ori_method.save_original_data(time_area_points_list, time_area_center_point_list, area_path, center_path)
 
         # 処理結果を読み込み
-        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
-        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
+        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
+        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
         time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
 
         # 点群をグループ化
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
 
+        # 中心点の軌跡から新たにグループを作成
+        cloud_folder_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd_0025s/{pcd_info_list.dir_name}"
+        integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.025)
+
         vectros_list = ori_method.get_vector(integraded_area_center_point_list)
         move_flg_list = ori_method.judge_move(vectros_list)
-
-        cloud_folder_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_01s/{pcd_info_list.dir_name}"
-        new_integraded_area_points_list, new_integraded_area_center_point_list = ori_method.grouping_points_list_2(pcd_info_list, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, 0.1)
-
-        # グループの中心点の軌跡から、さらにグループ分けを行う
-        # fig = plt.figure(figsize=(10, 10))
-        # ax = fig.add_subplot(111)
-        # ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name, xlim=[0, 25000])
-        # color_list = ["b", "g", "r", "c", "m", "y", "k"]*10
-        
-        # fit_list = []
-        # time_idx_list = []
-        # x_list = []
-        # y_list = []
-        # for group_idx in range(len(integraded_area_center_point_list)):
-        #     if move_flg_list[group_idx]:
-        #         # 中心点のxy座標の移動に対して、近似曲線を取得
-        #         time_idxs = [time_idx for time_idx, point in enumerate(integraded_area_center_point_list[group_idx]) if len(point)>0]
-        #         x = [point[0] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
-        #         y = [point[1] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
-
-        #         res = np.polyfit(x, y, 1)
-        #         y_fit = np.poly1d(res)(x)
-
-        #         if len(fit_list)==0:
-        #             fit_list.append(res[0])
-        #             time_idx_list = time_idxs
-        #             x_list = x
-        #             y_list = y
-        #         else:
-        #             if abs(fit_list[-1]-res[0])<1:
-        #                 fit_list.append(res[0])
-        #                 time_idx_list += time_idxs
-        #                 x_list += x
-        #                 y_list += y
-
-        #         # ax.plot(x, y_fit, label=f"group{group_idx}", c=color_list[group_idx])
-
-        # before_idx = None
-        # no_data = []
-        # new_time_idx_list = []
-        # new_x_list = []
-        # new_y_list = []
-        # for idx, time_idx in enumerate(time_idx_list):
-        #     if before_idx is not None:
-        #         if time_idx-before_time_idx>1:
-        #             x_step = (x_list[idx]-x_list[before_idx])/(time_idx-before_time_idx)
-        #             y_step = (y_list[idx]-y_list[before_idx])/(time_idx-before_time_idx)
-
-        #             for i in range(1, time_idx-before_time_idx):
-        #                 no_data.append(time_idx)
-        #                 new_time_idx_list.append(before_time_idx+i)
-        #                 new_x_list.append(x_list[before_idx]+x_step*i)
-        #                 new_y_list.append(y_list[before_idx]+y_step*i)
-            
-        #     new_time_idx_list.append(time_idx)
-        #     new_x_list.append(x_list[idx])
-        #     new_y_list.append(y_list[idx])
-            
-        #     before_idx = idx
-        #     before_time_idx = time_idx
-
-        # # 改めて処理を行う
-        # new_integraded_area_points_list = []
-        # new_integraded_area_center_point_list = []
-        # for group_idx in range(1):
-        #     new_integraded_area_points_list.append([])
-        #     new_integraded_area_center_point_list.append([])
-            
-        #     for time_idx in range(len(integraded_area_points_list[0])):
-        #         if time_idx in new_time_idx_list:
-        #             idx = new_time_idx_list.index(time_idx)
-
-        #             cloud_path = "/Users/kai/大学/小川研/LiDAR_step_length/20241011/pcd/pcd_01s/"+pcd_info_list.dir_name+"/"+str(time_idx+1)+".pcd"
-        #             pcd_info_list.load_pcd_from_file(cloud_path)
-                    
-        #             cloud = pcd_info_list.cloud
-        #             cloud_name = pcd_info_list.dir_name+"_"+str(time_idx+1)
-        #             # 高さの補正
-        #             points = np.array(cloud)
-        #             points[:, 2] = points[:, 2] + 1300
-        #             cloud = def_method.get_cloud(points)
-
-        #             pcd_info_list.load_pcd_from_cloud(cloud)
-        #             down_cloud = def_method.voxel_grid_filter(cloud)
-        #             down_points = np.array(down_cloud)
-
-        #             base_x = new_x_list[idx]
-        #             base_y = new_y_list[idx]
-        #             cloud_filtered = def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
-        #             points_filtered = np.array(cloud_filtered)
-        #             center_point = np.mean(points_filtered, axis=0)
-                    
-        #             new_integraded_area_points_list[group_idx].append(points_filtered)
-        #             new_integraded_area_center_point_list[group_idx].append(center_point)
-
-        #             try:
-        #                 fig = plt.figure()
-        #                 ax = fig.add_subplot(111, projection="3d")
-        #                 ax.scatter(points_filtered[:, 0], points_filtered[:, 1], points_filtered[:, 1], s=1)
-        #                 ax_set.set_ax(ax, cloud_name, zlim=[0, 1600], azim=0, elev=0)
-        #                 # plt.show()
-        #                 plt.close()
-        #             except:
-        #                 print(cloud_name)
-        #                 plt.close()
-        #         else:
-        #             new_integraded_area_points_list[group_idx].append([])
-        #             new_integraded_area_center_point_list[group_idx].append([])
-
-        integraded_area_points_list = new_integraded_area_points_list
-        integraded_area_center_point_list = new_integraded_area_center_point_list
-        vectros_list = ori_method.get_vector(integraded_area_center_point_list)
-        move_flg_list = ori_method.judge_move(vectros_list)
+        vectros_list = ori_method.get_vector_2(integraded_area_points_list, height=[1500, 1700])
 
         # 全体の点群を表示
         if False:
@@ -294,8 +185,8 @@ for sec in sec_list:
         #         for time_idx in range(len(integraded_area_points_list[0])):
         #             group_point = integraded_area_points_list[group_idx][time_idx]
         #             group_center_point = integraded_area_center_point_list[group_idx][time_idx]
-        #             new_group_point = new_integraded_area_points_list[0][time_idx]
-        #             new_group_center_point = new_integraded_area_center_point_list[0][time_idx]
+        #             new_group_point = integraded_area_points_list[0][time_idx]
+        #             new_group_center_point = integraded_area_center_point_list[0][time_idx]
 
         #             if len(group_center_point)>0:
         #                 tmp_point = group_center_point.copy()
@@ -304,15 +195,15 @@ for sec in sec_list:
         #                 tmp_point = group_point.copy()
         #                 tmp_point = tmp_point[(tmp_point[:, 2] > 1200) & (tmp_point[:, 2] < 1400)]
         #                 height = ori_method.get_height(group_point, 40)
-        #                 height = ori_method.get_bentchmark(tmp_point, 0, 100)
+        #                 height = ori_method.get_bentchmark(tmp_point, percent=[0, 100])[2]
 
         #                 new_tmp_point = new_group_center_point.copy()
         #                 new_tmp_point[2] = 0
         #                 new_normalized_points = new_group_point - new_tmp_point
         #                 new_tmp_point = new_group_point.copy()
         #                 new_tmp_point = new_tmp_point[(new_tmp_point[:, 2] > 1200) & (new_tmp_point[:, 2] < 1400)]
-        #                 new_height = ori_method.get_height(new_group_point, 40)
-        #                 new_height = ori_method.get_bentchmark(new_tmp_point, 0, 100)
+        #                 # new_height = ori_method.get_height(new_group_point, 40)[2]
+        #                 new_height = ori_method.get_bentchmark(new_tmp_point, percent=[0, 100])[2]
 
         #                 fig = plt.figure(figsize=(10, 10))
         #                 ax0 = fig.add_subplot(121, projection='3d')
@@ -325,8 +216,8 @@ for sec in sec_list:
         #                 heights = []
         #                 new_heights = []
         #                 for i in range(0, 100, 10):
-        #                     heights.append(ori_method.get_bentchmark(group_point, i, i+10))
-        #                     new_heights.append(ori_method.get_bentchmark(new_group_point, i, i+10))
+        #                     heights.append(ori_method.get_bentchmark(group_point, percent=[i, i+10])[2])
+        #                     new_heights.append(ori_method.get_bentchmark(new_group_point, percent=[i, i+10])[2])
         #                 heights_list.append(heights)
         #                 new_heights_list.append(new_heights)
 
@@ -353,7 +244,7 @@ for sec in sec_list:
         #                 heights_list.append([])
         #             plt.close()
         #         heights_lists[group_idx] = heights_list
-        # gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_{sec}s/{pcd_info_list.dir_name}_after_method_move.gif")
+        # gif.create_gif(f"/Users/kai/大学/小川研/LIDAR_step_length/20241011/gif/pcd_0025s/{pcd_info_list.dir_name}_after_method_move.gif", duration=0.025)
 
         # fig = plt.figure(figsize=(10, 10))
         # ax = fig.add_subplot(111)
@@ -472,7 +363,7 @@ for sec in sec_list:
                 title = f"{pcd_info_list.dir_name}"
                 ax0 = ax_set.set_ax(ax0, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
                 ax1 = ax_set.set_ax(ax1, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
-                # plt.pause(0.1)
+                # plt.show()
                 plt.close()
 
                 print("加速度を用いた歩幅の推定")
@@ -503,7 +394,7 @@ for sec in sec_list:
         ax = ax_set.set_ax(ax, title=pcd_info_list.dir_name+"-speed", xlabel="time", ylabel="speed", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(speed_list)-1, max(speed_list)+1])
         ax2 = ax_set.set_ax(ax2, title=pcd_info_list.dir_name+"-acceleration", xlabel="time", ylabel="acceleration", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(acceleration_list)-1, max(acceleration_list)+1], is_box_aspect=False)
 
-        # plt.show()
+        plt.show()
         plt.close()
 
 
@@ -533,8 +424,9 @@ for sec in sec_list:
                 ax.plot(time_idx_list, height_list, "o")
                 ax.plot(np.array(time_idx_list[1:-1])[sdiff_sign], np.array(height_list[1:-1])[sdiff_sign], "o")
                 ax_set.set_ax(ax, title=pcd_info_list.dir_name+" height", xlabel="time", ylabel="height (cm)", xlim=[time_idx_list[0]-1, time_idx_list[-1]+1], ylim=[min(height_list)-10, max(height_list)+10])
+                ax.set_box_aspect(1/2)
 
-                plt.pause(0.1)
+                plt.show()
                 plt.close()
 
                 print("高さの変化を用いた歩幅の推定")
@@ -559,9 +451,9 @@ for sec in sec_list:
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111)
         ax.boxplot([step_length_accelaration_list, step_length_height_list], labels=["acceleration", "height"])
-        # ax_set.set_ax(ax, title=pcd_info_list.dir_name, ylabel="step_length (cm)")
+        ax_set.set_ax(ax, title=pcd_info_list.dir_name, ylabel="step_length (cm)")
         ax.set_title(pcd_info_list.dir_name)
-        ax.set_ylim(0, 1100)
+        # ax.set_ylim(0, 1100)
         plt.show()
         plt.close()
 
@@ -569,7 +461,7 @@ for sec in sec_list:
         ax = fig.add_subplot(211)
         ax.hist(step_length_accelaration_list, bins=55, range=(0, 1100), label="acceleration")
         ax2 = fig.add_subplot(212)
-        ax2.hist(step_length_height_list, bins=55, range=(200, 1100), label="height")
+        ax2.hist(step_length_height_list, bins=55, range=(0, 1100), label="height")
         ax.set_title(pcd_info_list.dir_name+"\nacceleration")
         ax2.set_title("height")
 
