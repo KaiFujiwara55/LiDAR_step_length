@@ -372,9 +372,15 @@ class cloud_method:
         points_sort = points[np.argsort(points[:, 2])]
 
         if percent is not None:
-            bench_point = np.mean(points_sort[int(len(points_sort)*percent[0]/100):int(len(points_sort)*percent[1]/100)], axis=0)
+            points_sort = points_sort[int(len(points_sort)*percent[0]/100):int(len(points_sort)*percent[1]/100)]
+            bench_point = np.mean(points_sort, axis=0)
+        elif height is not None:
+            points_sort = points_sort[(points_sort[:, 2]>height[0]) & (points_sort[:, 2]<height[1])]
+            if len(points_sort)==0:
+                return []
+            bench_point = np.mean(points_sort, axis=0)
         else:
-            bench_point = np.mean(points_sort[(points_sort[:, 2]>height[0]) & (points_sort[:, 2]<height[1])], axis=0)
+            bench_point = np.mean(points_sort, axis=0)
         
         return bench_point
 
