@@ -41,7 +41,10 @@ class get_pcd_information:
     def load_pcd_from_file(self, file_path):
         """PCDファイルの読み込み"""
         cloud = pcl.load(file_path)
-        points = np.array(cloud)
+        if cloud.size == 0:
+            points = np.array([[]])
+        else:
+            points = np.array(cloud)
 
         self.cloud = cloud
         self.points = points

@@ -482,30 +482,31 @@ class cloud_method:
                     if time_idx in new_time_idx_list_2:
                         idx_2 = new_time_idx_list_2.index(time_idx)
                         cloud_path = f"{cloud_folder_path}/{str(int(time_idx*(0.1/sec)+1))}.pcd"
-                        cloud = pcl.load(cloud_path)
+                        if os.path.exists(cloud_path):
+                            cloud = pcl.load(cloud_path)
 
-                        # 傾きの補正
-                        cloud = self.def_method.rotate_cloud(cloud, -theta_x, theta_y)
-                        # 高さの補正
-                        points = np.array(cloud)
-                        points[:, 2] = points[:, 2] + 1300
-                        cloud = self.def_method.get_cloud(points)
+                            # 傾きの補正
+                            cloud = self.def_method.rotate_cloud(cloud, -theta_x, theta_y)
+                            # 高さの補正
+                            points = np.array(cloud)
+                            points[:, 2] = points[:, 2] + 1300
+                            cloud = self.def_method.get_cloud(points)
 
-                        base_x = new_x_list_2[idx_2]
-                        base_y = new_y_list_2[idx_2]
-                        cloud_filtered = self.def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
-                        
-                        if cloud_filtered.size>0:
-                            points_filtered = np.array(cloud_filtered)
-                            center_point = np.mean(points_filtered, axis=0)
+                            base_x = new_x_list_2[idx_2]
+                            base_y = new_y_list_2[idx_2]
+                            cloud_filtered = self.def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
                             
-                            new_integraded_area_points_list[group_idx].append(points_filtered)
-                            new_integraded_area_center_point_list[group_idx].append(center_point)
+                            if cloud_filtered.size>0:
+                                points_filtered = np.array(cloud_filtered)
+                                center_point = np.mean(points_filtered, axis=0)
+                                
+                                new_integraded_area_points_list[group_idx].append(points_filtered)
+                                new_integraded_area_center_point_list[group_idx].append(center_point)
+                            else:
+                                new_integraded_area_points_list[group_idx].append([])
+                                new_integraded_area_center_point_list[group_idx].append([])
                         else:
                             new_integraded_area_points_list[group_idx].append([])
                             new_integraded_area_center_point_list[group_idx].append([])
-                    else:
-                        new_integraded_area_points_list[group_idx].append([])
-                        new_integraded_area_center_point_list[group_idx].append([])
         
         return new_integraded_area_points_list, new_integraded_area_center_point_list
