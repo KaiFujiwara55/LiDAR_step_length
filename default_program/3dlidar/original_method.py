@@ -113,7 +113,7 @@ class cloud_method:
         distance = np.linalg.norm(points1-points2)
         return distance
 
-    def get_neighborhood_points(self, cloud, radius=250):
+    def get_neighborhood_points(self, cloud, radius=250, count_threshold=100):
         """
         xy平面上で半径radius内の点群のグループを取得
         引数:
@@ -149,7 +149,7 @@ class cloud_method:
             under_idx = indicesm[idx, np.where(sqr_distances[idx]<radius**2)[0]]
 
             # 点群数が100未満の場合 or すでにピックアップされた点群を含む場合はスキップ
-            if len(under_idx)<100:
+            if len(under_idx)<count_threshold:
                 continue
             elif not np.all(np.isin(under_idx, reserve_points_idx)):
                 continue
@@ -384,7 +384,7 @@ class cloud_method:
         
         return bench_point
 
-    def grouping_points_list_2(self, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.1):
+    def grouping_points_list_2(self, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.1, is_incline=True):
         fit_list = []
         time_idx_list = []
         x_list = []
@@ -468,9 +468,14 @@ class cloud_method:
         new_integraded_area_center_point_list = []
 
         # 傾きを取得
-        pcd_info_list = get_pcd_information.get_pcd_information()
-        pcd_info_list.load_pcd_dir(cloud_folder_path)
-        theta_x, theta_y, theta_z = self.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
+        if is_incline:
+            pcd_info_list = get_pcd_information.get_pcd_information()
+            pcd_info_list.load_pcd_dir(cloud_folder_path)
+            theta_x, theta_y, theta_z = self.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
+        else:
+            theta_x = 0
+            theta_y = 0
+            theta_z = 0
 
         for group_idx in range(1):
             new_integraded_area_points_list.append([])
