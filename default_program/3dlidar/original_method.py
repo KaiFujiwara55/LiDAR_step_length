@@ -390,7 +390,7 @@ class cloud_method:
         x_list = []
         y_list = []
 
-        move_flg_list = self.judge_move(self.get_vector(integraded_area_center_point_list))
+        move_flg_list = self.judge_move(self.get_vector(integraded_area_center_point_list), threshold=1000)
         for group_idx in range(len(integraded_area_center_point_list)):
             if move_flg_list[group_idx]:
                 # 中心点のxy座標の移動に対して、近似曲線を取得
@@ -480,7 +480,7 @@ class cloud_method:
         for group_idx in range(1):
             new_integraded_area_points_list.append([])
             new_integraded_area_center_point_list.append([])
-            
+
             for idx in range(len(integraded_area_points_list[0])):
                 for step in range(int(0.1/sec)):
                     time_idx = idx+(sec/0.1)*step
@@ -515,3 +515,163 @@ class cloud_method:
                             new_integraded_area_center_point_list[group_idx].append([])
         
         return new_integraded_area_points_list, new_integraded_area_center_point_list
+
+
+## 回収中
+def grouping_points_list_2_new(self, integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=0.1, is_incline=True):
+    fit_list_dic = {}
+    time_idx_list_dic = {}
+    x_list_dic = {}
+    y_list_dic = {}
+    gropu_idx_dic = {}
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    move_flg_list = self.judge_move(self.get_vector(integraded_area_center_point_list), threshold=1000)
+    for group_idx in range(len(integraded_area_center_point_list)):
+        if move_flg_list[group_idx]:
+            # 中心点のxy座標の移動に対して、近似曲線を取得
+            time_idxs = [time_idx for time_idx, point in enumerate(integraded_area_center_point_list[group_idx]) if len(point)>0]
+            x = [point[0] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
+            y = [point[1] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
+
+            res = np.polyfit(x, y, 1)
+            ax.plot(x, y, label=f"{group_idx}")
+            ax.plot(x, np.poly1d(res)(x), label=f"{group_idx}_fit")
+            if len(fit_list_dic)==0:
+                fit_list_dic[0] = [res[0]]
+                time_idx_list_dic[0] = time_idxs
+                x_list_dic[0] = x
+                y_list_dic[0] = y
+                gropu_idx_dic[0] = [group_idx]
+            else:
+                for key in list(fit_list_dic.keys()):
+                    points1 = np.array([x_list_dic[key][-1], y_list_dic[key][-1]])
+                    points2 = np.array([x[0], y[0]])
+                    if abs(fit_list_dic[key][-1]-res[0])<1 and abs(self.calc_points_distance(points1, points2))<500:
+                        fit_list_dic[key].append(res[0])
+                        time_idx_list_dic[key] += time_idxs
+                        x_list_dic[key] += x
+                        y_list_dic[key] += y
+                        gropu_idx_dic[key].append(group_idx)
+                        break
+                    else:
+                        new_key = len(fit_list_dic.keys())
+                        fit_list_dic[new_key] = [res[0]]
+                        time_idx_list_dic[new_key] = time_idxs
+                        x_list_dic[new_key] = x
+                        y_list_dic[new_key] = y
+                        gropu_idx_dic[new_key] = [group_idx]
+                        break
+    print(gropu_idx_dic)
+    ax.legend()
+    plt.show()
+    plt.close()
+    
+    before_idx = None
+    no_data = []
+    new_time_idx_list = []
+    new_x_list = []
+    new_y_list = []
+    
+    new_integraded_area_points_list = [] 
+    new_integraded_area_center_point_list = []
+    for key in list(fit_list_dic.keys()):
+        fit_list = fit_list_dic[key]
+        time_idx_list = time_idx_list_dic[key]
+        x_list = x_list_dic[key]
+        y_list = y_list_dic[key]
+        for idx, time_idx in enumerate(time_idx_list):
+            if before_idx is not None:
+                if time_idx-before_time_idx>1:
+                    x_step = (x_list[idx]-x_list[before_idx])/(time_idx-before_time_idx)
+                    y_step = (y_list[idx]-y_list[before_idx])/(time_idx-before_time_idx)
+
+                    for i in range(1, time_idx-before_time_idx):
+                        no_data.append(time_idx)
+                        new_time_idx_list.append(before_time_idx+i)
+                        new_x_list.append(x_list[before_idx]+x_step*i)
+                        new_y_list.append(y_list[before_idx]+y_step*i)
+            
+            new_time_idx_list.append(time_idx)
+            new_x_list.append(x_list[idx])
+            new_y_list.append(y_list[idx])
+            
+            before_idx = idx
+            before_time_idx = time_idx
+
+        # step_secを変更する場合
+        new_time_idx_list_2 = []
+        new_x_list_2 = []
+        new_y_list_2 = []
+        if sec<0.1:
+            for i in range(1, len(new_time_idx_list)):
+                before_time_idx = new_time_idx_list[i-1]
+                after_time_idx = new_time_idx_list[i]
+                before_x = new_x_list[i-1]
+                after_x = new_x_list[i]
+                before_y = new_y_list[i-1]
+                afetr_y = new_y_list[i]
+
+                step_time = sec/0.1
+                step_x = (after_x-before_x)/(0.1/sec)
+                step_y = (afetr_y-before_y)/(0.1/sec)
+                for j in range(int(0.1/sec)):
+                    new_time_idx_list_2.append(before_time_idx+step_time*j)
+                    new_x_list_2.append(before_x+step_x*j)
+                    new_y_list_2.append(before_y+step_y*j)
+            else:
+                new_time_idx_list_2.append(after_time_idx)
+                new_x_list_2.append(after_x)
+                new_y_list_2.append(afetr_y)
+        else:
+            new_time_idx_list_2 = new_time_idx_list
+            new_x_list_2 = new_x_list
+            new_y_list_2 = new_y_list
+
+        # 傾きを取得
+        if is_incline:
+            pcd_info_list = get_pcd_information.get_pcd_information()
+            pcd_info_list.load_pcd_dir(cloud_folder_path)
+            theta_x, theta_y, theta_z = self.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
+        else:
+            theta_x = 0
+            theta_y = 0
+            theta_z = 0
+        new_integraded_area_points_list.append([])
+        new_integraded_area_center_point_list.append([])
+        for idx in range(len(integraded_area_points_list[0])):
+            for step in range(int(0.1/sec)):
+                time_idx = idx+(sec/0.1)*step
+                if time_idx in new_time_idx_list_2:
+                    idx_2 = new_time_idx_list_2.index(time_idx)
+                    cloud_path = f"{cloud_folder_path}/{str(int(time_idx*(0.1/sec)+1))}.pcd"
+                    if os.path.exists(cloud_path):
+                        cloud = pcl.load(cloud_path)
+
+                        # 傾きの補正
+                        cloud = self.def_method.rotate_cloud(cloud, -theta_x, theta_y)
+                        # 高さの補正
+                        points = np.array(cloud)
+                        points[:, 2] = points[:, 2] + 1300
+                        cloud = self.def_method.get_cloud(points)
+
+                        base_x = new_x_list_2[idx_2]
+                        base_y = new_y_list_2[idx_2]
+                        cloud_filtered = self.def_method.filter_area(cloud, base_x-250, base_x+250, base_y-250, base_y+250, 0, 1700)
+                        if cloud_filtered.size>0:
+                            points_filtered = np.array(cloud_filtered)
+                            center_point = np.mean(points_filtered, axis=0)
+                            
+                            new_integraded_area_points_list[-1].append(points_filtered)
+                            new_integraded_area_center_point_list[-1].append(center_point)
+                        else:
+                            new_integraded_area_points_list[-1].append([])
+                            new_integraded_area_center_point_list[-1].append([])
+                    else:
+                        new_integraded_area_points_list[-1].append([])
+                        new_integraded_area_center_point_list[-1].append([])
+        
+    return new_integraded_area_points_list, new_integraded_area_center_point_list
+
