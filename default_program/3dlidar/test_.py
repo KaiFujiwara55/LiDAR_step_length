@@ -13,7 +13,7 @@ import create_gif
 # sec_list = ["015", "02", "025", "03"]
 sec_list = ["01"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241025/pcd_{sec}s/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241028/pcd_{sec}s/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()

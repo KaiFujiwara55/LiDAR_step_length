@@ -9,6 +9,7 @@
 
 default_program/3dlidar/grouping
 default_program/3dlidar/segmentation
+gif
 
 tmp_folder
 __pycache__/

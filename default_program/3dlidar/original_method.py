@@ -76,6 +76,7 @@ class cloud_method:
             theta_z: float
         """
         all_points = None
+        print(pcd_info_list.points_list)
         for points in pcd_info_list.points_list:
             if all_points is None:
                 all_points = points
@@ -470,6 +471,7 @@ class cloud_method:
         # 傾きを取得
         if is_incline:
             pcd_info_list = get_pcd_information.get_pcd_information()
+            print(cloud_folder_path)
             pcd_info_list.load_pcd_dir(cloud_folder_path)
             theta_x, theta_y, theta_z = self.cloud_get_tilt(pcd_info_list, upper_threshold=2000-1300)
         else:
