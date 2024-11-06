@@ -11,17 +11,14 @@ import get_pcd_information
 import create_gif
 
 # sec_list = ["015", "02", "025", "03"]
-sec_list = ["01"]
+sec_list = ["01", "005, 0025"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241028/pcd_{sec}s/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241105/pcd_{sec}s/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
     ori_method = original_method.cloud_method()
     for dir in dirs:
-        if "repeat" in dir:
-            continue
-        
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
@@ -45,10 +42,15 @@ for sec in sec_list:
             filtered_cloud = cloud
 
             # 高さの正規化を行う
-            source_cloud = def_method.get_cloud(def_method.get_points(source_cloud) + np.array([0, 0, 1300]))
-            filtered_cloud = def_method.get_cloud(def_method.get_points(filtered_cloud) + np.array([0, 0, 1300]))
+            if "high" in pcd_info_list.dir_name:
+                correction_height = 2000
+            else:
+                correction_height = 1300
+            source_cloud = def_method.get_cloud(def_method.get_points(source_cloud) + np.array([0, 0, correction_height]))
+            filtered_cloud = def_method.get_cloud(def_method.get_points(filtered_cloud) + np.array([0, 0, correction_height]))
 
             tmp_cloud_list = []
+            flg = False
             for i in range(10):
                 # knnを使用
                 # indices, sqr_distances = def_method.kdtree_search(source_cloud, k=10)
@@ -68,7 +70,11 @@ for sec in sec_list:
                 cloud_plane, cloud_non_plane, coefficients, indices = def_method.segment_plane(grid_filtered_cloud, ksearch, distance_threshold)
                 if cloud_plane.size==0:
                     print("No plane")
-                    filtered_cloud = tmp_cloud_list[-3]
+                    try:
+                        filtered_cloud = tmp_cloud_list[-3]
+                    except:
+                        flg = True
+                        pass
                     break
                 cloud_plane, cloud_non_plane = def_method.filter_points_by_distance(filtered_cloud, coefficients, distance_threshold)
 
@@ -90,6 +96,8 @@ for sec in sec_list:
             # y_step = 500
             # var_filtered_cloud, surface_xy_list = def_method.filter_by_height_var(grid_filtered_cloud, var_threshold, x_step, y_step)
 
+            if flg:
+                continue
             # 領域内の点群を取得
             area_points_list, area_center_point_list = ori_method.get_neighborhood_points(statistical_filtered_cloud, radius=250)
 

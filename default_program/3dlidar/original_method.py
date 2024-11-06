@@ -76,7 +76,6 @@ class cloud_method:
             theta_z: float
         """
         all_points = None
-        print(pcd_info_list.points_list)
         for points in pcd_info_list.points_list:
             if all_points is None:
                 all_points = points
