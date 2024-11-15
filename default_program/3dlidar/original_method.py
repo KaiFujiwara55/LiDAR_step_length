@@ -139,7 +139,7 @@ class cloud_method:
         # 各点に対する円内にある点群数が多い順にソート
         idxs = np.argsort(count_under_threshold)[::-1]
         
-        # 重複がないように領域内で点群数が100以上の範囲をピックアップ
+        # 重複がないように領域内で点群数がcount_threshold以上の範囲をピックアップ
         area_points_list = []
         area_center_point_list = []
         # ピックアップされていない点群のインデックス
