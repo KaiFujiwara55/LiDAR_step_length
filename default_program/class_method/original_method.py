@@ -2,8 +2,9 @@ import os
 import numpy as np
 import glob
 import pcl
-import default_method
-import get_pcd_information
+
+from default_program.class_method import default_method
+from default_program.class_method import get_pcd_information
 
 class cloud_method:
     """3次元点群処理のオリジナルな処理をまとめたクラス"""

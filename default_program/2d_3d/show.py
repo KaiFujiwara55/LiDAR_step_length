@@ -1,16 +1,13 @@
-import os
 import numpy as np
-import pcl
-import glob
-import time
 import matplotlib.pyplot as plt
-import sys
-sys.path.append('/Users/kai/大学/小川研/LiDAR_step_length/default_program/3dlidar')
-import plot
-import default_method
-import original_method
-import get_pcd_information
-import create_gif
+import glob
+from tqdm import tqdm
+
+from default_program.class_method import get_pcd_information
+from default_program.class_method import default_method
+from default_program.class_method import original_method
+from default_program.class_method import plot
+from default_program.class_method import create_gif
 
 sec_list = ["01"]
 for sec in sec_list:
@@ -30,31 +27,34 @@ for sec in sec_list:
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
 
-        if False:
-            time_area_points_list = []
-            time_area_center_point_list = []
-            for i, cloud in enumerate(pcd_info_list.cloud_list):
-                points = np.array(cloud)
-                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(cloud, radius=250, count_threshold=10)
-
-                # 時系列の点群を保存
-                time_area_points_list.append(area_points_list)
-                time_area_center_point_list.append(area_center_point_list)
-
-            # 処理結果を保存
-            area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_points_list/2d/{pcd_info_list.dir_name}_{sec}s"
-            center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_center_point_list/2d/{pcd_info_list.dir_name}_{sec}s"
-            ori_method.save_original_data(time_area_points_list, time_area_center_point_list, area_path, center_path)
-
         # 処理結果を読み込み
-        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_points_list/2d/{pcd_info_list.dir_name}_{sec}s"
-        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_center_point_list/2d/{pcd_info_list.dir_name}_{sec}s"
+        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/2d/{sec}s/{pcd_info_list.dir_name}"
+        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/2d/{sec}s/{pcd_info_list.dir_name}"
         time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
+
+        # for i in range(len(time_area_points_list)):
+        #     area_points_list = time_area_points_list[i]
+        #     area_center_point_list = time_area_center_point_list[i]
+            
+        #     if len(area_points_list)>0:
+        #         fig = plt.figure()
+        #         ax = fig.add_subplot(111)
+        #         title = f"{pcd_info_list.dir_name}_{sec}s_{i}"
+        #         ax = ax_set.set_ax(ax, title=title)
+        #         for group_idx in range(len(area_points_list)):
+        #             points = area_points_list[group_idx]
+        #             if len(points) == 0:
+        #                 continue
+        #             points = np.array(points)
+
+        #             ax.scatter(points[:, 0], points[:, 1], c="b", s=1)
+        #         plt.show()
+        #         plt.close()
 
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
 
-        gif = create_gif.create_gif()
         color_list = ["b", "g", "c", "m", "y", "k"]*100
+        gif = create_gif.create_gif(False)
         for time_idx in range(len(time_area_points_list)):
             fig = plt.figure()
             ax = fig.add_subplot(111)
