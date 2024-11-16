@@ -9,6 +9,9 @@ from default_program.class_method import original_method
 from default_program.class_method import plot
 from default_program.class_method import create_gif
 
+collect_x = 110
+collect_y = 100
+
 sec_list = ["01"]
 for sec in sec_list:
     dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/"
@@ -18,6 +21,8 @@ for sec in sec_list:
     ori_method = original_method.cloud_method()
 
     for dir in dirs:
+        if "mapping" in dir:
+            continue
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
@@ -32,25 +37,6 @@ for sec in sec_list:
         center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/2d/{sec}s/{pcd_info_list.dir_name}"
         time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
 
-        # for i in range(len(time_area_points_list)):
-        #     area_points_list = time_area_points_list[i]
-        #     area_center_point_list = time_area_center_point_list[i]
-            
-        #     if len(area_points_list)>0:
-        #         fig = plt.figure()
-        #         ax = fig.add_subplot(111)
-        #         title = f"{pcd_info_list.dir_name}_{sec}s_{i}"
-        #         ax = ax_set.set_ax(ax, title=title)
-        #         for group_idx in range(len(area_points_list)):
-        #             points = area_points_list[group_idx]
-        #             if len(points) == 0:
-        #                 continue
-        #             points = np.array(points)
-
-        #             ax.scatter(points[:, 0], points[:, 1], c="b", s=1)
-        #         plt.show()
-        #         plt.close()
-
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
 
         color_list = ["b", "g", "c", "m", "y", "k"]*100
@@ -59,14 +45,13 @@ for sec in sec_list:
             fig = plt.figure()
             ax = fig.add_subplot(111)
             title = f"{pcd_info_list.dir_name}_{sec}s_{time_idx}"
-            ax = ax_set.set_ax(ax, title=title)
             for group_idx in range(len(time_area_points_list[time_idx])):
                 points = time_area_points_list[time_idx][group_idx]
                 if len(points) == 0:
                     continue
                 points = np.array(points)
 
-                ax.scatter(points[:, 0], points[:, 1], c=color_list[group_idx], s=1)
+                ax.scatter(points[:, 0]+collect_x, points[:, 1]+collect_y, c=color_list[group_idx], s=1)
             plt.show()
             gif.save_fig(fig)
             plt.close()

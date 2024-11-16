@@ -1,19 +1,22 @@
 import os
+import sys
 import numpy as np
 import pcl
-import plot
 import glob
 import time
 import matplotlib.pyplot as plt
-import default_method
-import original_method
-import get_pcd_information
-import create_gif
+
+sys.path.append("/Users/kai/大学/小川研/LiDAR_step_length")
+from default_program.class_method import plot
+from default_program.class_method import default_method
+from default_program.class_method import original_method
+from default_program.class_method import get_pcd_information
+from default_program.class_method import create_gif
 
 # sec_list = ["015", "02", "025", "03"]
 sec_list = ["01", "005, 0025"]
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241105/pcd_{sec}s/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
@@ -22,6 +25,9 @@ for sec in sec_list:
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
+
+        set_ax = plot.set_plot()
+        set_ax.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
         start = time.time()
@@ -109,6 +115,6 @@ for sec in sec_list:
         print(f"処理時間 : {time.time()-start}")
 
         # 処理結果を保存
-        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_points_list/{pcd_info_list.dir_name}_{sec}s"
-        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/tmp_folder/time_area_center_point_list/{pcd_info_list.dir_name}_{sec}s"
+        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/{sec}s/{pcd_info_list.dir_name}"
+        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/3d/{sec}s/{pcd_info_list.dir_name}"
         ori_method.save_original_data(time_area_points_list, time_area_center_point_list, area_path, center_path)

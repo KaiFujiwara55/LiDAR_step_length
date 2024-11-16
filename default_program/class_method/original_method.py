@@ -48,6 +48,7 @@ class cloud_method:
         time_area_center_point_list = []
         for time_idx in range(time_idxs):
             center_points = []
+            print(f"{center_path}/{time_idx}.txt")
             with open(f"{center_path}/{time_idx}.txt", "r") as f:
                 for line in f:
                     center_point = [float(x) for x in line.split()]
