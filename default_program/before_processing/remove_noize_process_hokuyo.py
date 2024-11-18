@@ -53,7 +53,7 @@ def remove_noize(cloud, noize_points, threshold=50):
         return new_cloud, new_points
 
 # ごみ取りを行う
-sec_list = ["01"]
+sec_list = ["0025", "005"]
 noize_folder = "/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_01s/2d/mapping_1113"
 
 noize_cloud, noize_points = get_noize_points(noize_folder)
@@ -61,7 +61,7 @@ noize_cloud, noize_points = get_noize_points(noize_folder)
 for sec in sec_list:
     active_folder_list = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_{sec}s/2d/*")
     for active_folder in active_folder_list:
-        if noize_folder in active_folder:
+        if noize_folder.split("/")[-1] in active_folder:
             continue
         print(active_folder)
         pcd_info_list = get_pcd_information.get_pcd_information()

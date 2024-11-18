@@ -33,44 +33,46 @@ for sec in sec_list:
         # 処理結果を読み込み
         area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/{sec}s/{pcd_info_list.dir_name}"
         center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/3d/{sec}s/{pcd_info_list.dir_name}"
-        print(area_path)
         time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
-        print(time_area_points_list)
+
         for time_idx in range(len(time_area_points_list)):
             if len(time_area_points_list[time_idx]) == 0:
                 continue
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax = ax_set.set_ax(ax)
             for group_idx in range(len(time_area_points_list[time_idx])):
                 points = time_area_points_list[time_idx][group_idx]
                 if len(points) == 0:
                     continue
                 points = np.array(points)
 
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                ax = ax_set.set_ax(ax)
                 ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
-                plt.show()
-                plt.close()
+            # plt.show()
+            plt.close()
 
-        continue
         # 点群をグループ化
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
 
         # 中心点の軌跡から新たにグループを作成
         sec_2 = 0.1
-        cloud_folder_path = dir_path+"pcd_"+str(sec_2).replace(".", "")+"s/"+pcd_info_list.dir_name
+        cloud_folder_path = dir_path+"pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_list.dir_name
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, is_incline=False)
+        move_flg_list = ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list))
 
-        for time_idx in range(len(integraded_area_points_list[0])):
-            fig = plt.figure()
-            for group_idx in range(len(integraded_area_points_list)):
-                points = integraded_area_points_list[group_idx][time_idx]
-                if len(points) > 0:
-                    ax1 = fig.add_subplot(121, projection='3d')
-                    ax1 = ax_set.set_ax(ax1)
-                    ax1.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
-            plt.show()
-            plt.close()
+        for group_idx in range(len(integraded_area_points_list)):
+            if move_flg_list[group_idx]:
+                for time_idx in range(len(integraded_area_points_list[0])):
+                    points = integraded_area_points_list[group_idx][time_idx]
+                    center_point = integraded_area_center_point_list[group_idx][time_idx]
+                    if len(center_point) > 0:
+                        fig = plt.figure()
+                        ax1 = fig.add_subplot(121, projection='3d')
+                        ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_{sec}s, group_idx:{group_idx}, time_idx:{time_idx}")
+                        ax1.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
+                        ax1.scatter(center_point[0], center_point[1], center_point[2], s=10, c="red")
+                        plt.show()
+                        plt.close()
 
         continue
         # 時系列ごとでの点群表示

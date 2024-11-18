@@ -42,6 +42,7 @@ class cloud_method:
             time_area_points_list: list
             time_area_center_point_list: list
         """
+        print("start")
         time_idxs = len(glob.glob(f"{center_path}/*"))
 
         time_area_points_list = []
