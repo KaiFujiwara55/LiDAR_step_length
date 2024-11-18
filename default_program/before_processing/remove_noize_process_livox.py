@@ -5,7 +5,7 @@ import pcl
 import glob
 import time
 import matplotlib.pyplot as plt
-import tqdm
+from tqdm import tqdm
 
 sys.path.append("/Users/kai/大学/小川研/LiDAR_step_length")
 from default_program.class_method import plot
@@ -15,7 +15,7 @@ from default_program.class_method import get_pcd_information
 from default_program.class_method import create_gif
 
 # sec_list = ["015", "02", "025", "03"]
-sec_list = ["005, 0025"]
+sec_list = ["005", "0025"]
 correction_height = 1450
 for sec in sec_list:
     dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_{sec}s/3d/*")

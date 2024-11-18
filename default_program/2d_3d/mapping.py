@@ -15,6 +15,10 @@ ori_method = original_method.cloud_method()
 mpaping_2d = "/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_01s/2d/mapping_1113"
 mapping_3d = "/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_01s/3d/mapping_1113"
 
+# 補正値
+x = 110
+y = 100
+theta = 0
 pcd_information_2d = get_pcd_information.get_pcd_information()
 pcd_information_2d.load_pcd_dir(mpaping_2d)
 pcd_information_3d = get_pcd_information.get_pcd_information()
@@ -37,9 +41,10 @@ for cloud in pcd_information_3d.cloud_list:
 set_ax = plot.set_plot()
 set_ax.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(all_points_2d[:, 0].min(), all_points_2d[:, 0].max()), ylim=(all_points_2d[:, 1].min(), all_points_2d[:, 1].max()), zlim=(all_points_2d[:, 2].min(), all_points_2d[:, 2].max()), azim=150)
 
-# 補正値
-x = 110
-y = 100
+# 補正を行う
+all_points_2d[:, 0] += x
+all_points_2d[:, 1] += y
+all_points_2d = def_method.rotate_cloud(all_points_2d, theta)
 
 plt.figure()
 ax = plt.subplot(211)

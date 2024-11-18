@@ -42,14 +42,12 @@ class cloud_method:
             time_area_points_list: list
             time_area_center_point_list: list
         """
-        print("start")
         time_idxs = len(glob.glob(f"{center_path}/*"))
 
         time_area_points_list = []
         time_area_center_point_list = []
         for time_idx in range(time_idxs):
             center_points = []
-            print(f"{center_path}/{time_idx}.txt")
             with open(f"{center_path}/{time_idx}.txt", "r") as f:
                 for line in f:
                     center_point = [float(x) for x in line.split()]
