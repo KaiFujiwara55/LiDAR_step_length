@@ -303,3 +303,41 @@ class cloud_method:
         rot_cloud.from_array(rot_points.astype(np.float32))
 
         return rot_cloud
+
+    def rotate_points(self, points, theta_x=0, theta_y=0, theta_z=0, center=(0, 0, 0)):
+        """
+        3次元点群の回転
+        引数:
+            points: np.array
+            theta_x: float (radian)
+            theta_y: float (radian)
+            theta_z: float (radian)
+        返り値:
+            rot_points: np.array
+        
+        theta_x: x軸周りの回転角度
+        theta_y: y軸周りの回転角度
+        theta_z: z軸周りの回転角度
+        """
+        rot_x = np.array(
+            [[ 1, 0, 0],
+            [ 0, np.cos(theta_x), -np.sin(theta_x)],
+            [ 0, np.sin(theta_x),  np.cos(theta_x)]]
+            )
+
+        rot_y = np.array(
+            [[ np.cos(theta_y), 0, np.sin(theta_y)],
+            [0, 1, 0],
+            [-np.sin(theta_y), 0, np.cos(theta_y)]]
+            )
+
+        rot_z = np.array(
+            [[ np.cos(theta_z), -np.sin(theta_z), 0],
+            [ np.sin(theta_z), np.cos(theta_z), 0],
+            [0, 0, 1]]
+            )
+
+        rot_matrix = rot_z.dot(rot_y.dot(rot_x))
+        rot_points = rot_matrix.dot(points.T).T
+
+        return rot_points
