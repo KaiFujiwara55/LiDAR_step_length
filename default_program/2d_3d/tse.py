@@ -46,41 +46,24 @@ for sec in sec_list:
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list(time_area_points_list_3d, time_area_center_point_list_3d, integrade_threshold=5)
         sec_2 = 0.1
         cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_3d.dir_name
-        integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list_2(integraded_area_points_list_3d, integraded_area_center_point_list_3d, cloud_folder_path, sec=sec_2, is_incline=False)
+        integraded_area_points_list, integraded_area_center_point_list_3d = ori_method.grouping_points_list_2(integraded_area_points_list_3d, integraded_area_center_point_list_3d, cloud_folder_path, sec=sec_2, is_incline=False)
 
-        gif = create_gif.create_gif(False)
-        for time_idx in range(min(len(time_area_points_list_2d), len(integraded_area_points_list_3d[0]))):
-            fig = plt.figure()
-            ax1 = fig.add_subplot(121, projection="3d")
-            title = f"{pcd_info_2d.dir_name}_{sec}s_{time_idx}"
-            ax1 = set_ax.set_ax(ax1, title=title)
-            ax2 = fig.add_subplot(122, projection="3d")
-            ax2 = set_ax.set_ax(ax2, title=title, xlim=[-250, 250], ylim=[-250, 250], zlim=[0, 2000])
+        top_percent = 0.1
+        
+        height_list = []
+        for group_idx in range(len(integraded_area_points_list)):
+            all_points = None
 
-            # 2dの描画
-            for group_idx_2d in range(len(time_area_points_list_2d[time_idx])):
-                points = time_area_points_list_2d[time_idx][group_idx_2d]
-                if len(points) == 0:
-                    continue
-                normalized_points = points - time_area_center_point_list_2d[time_idx][group_idx_2d]
-                points = np.array(points)
-                ax1.scatter(points[:, 0]+corect_x, points[:, 1]+corect_y, 450, c="b", s=1)
-                ax2.scatter(normalized_points[:, 0], normalized_points[:, 1], 450, c="b", s=1)
+            for time_idx in range(len(integraded_area_points_list[group_idx])):
+                if all_points is None:
+                    all_points = integraded_area_points_list[group_idx][time_idx]
+                else:
+                    all_points = np.vstack([all_points, integraded_area_points_list[group_idx][time_idx]])
 
-            # 3dの描画
-            for group_idx_3d in range(len(integraded_area_points_list_3d)):
-                points = integraded_area_points_list_3d[group_idx_3d][time_idx]
-                if len(points) == 0:
-                    continue
-                normalized_points = points.copy()
-                normalized_points[:, 0] = points[:, 0] - integraded_area_center_point_list_3d[group_idx_3d][time_idx][0]
-                normalized_points[:, 1] = points[:, 1] - integraded_area_center_point_list_3d[group_idx_3d][time_idx][1]
-                points = np.array(points)
-                ax1.scatter(points[:, 0], points[:, 1], points[:, 2], c="r", s=1)
-                ax2.scatter(normalized_points[:, 0], normalized_points[:, 1], normalized_points[:, 2], c="r", s=1)
+            z = all_points[:, 2]
+            z = np.sort(z)[::-1]
+            z = z[:int(len(z)*top_percent/100)]
 
-            plt.show()
-            gif.save_fig(fig)
-            plt.close()
-        output_path = f"/Users/kai/大学/小川研/LiDAR_step_length/gif/2d_3d/{pcd_info_2d.dir_name}_{sec}s.gif"
-        gif.create_gif(output_path)
+            height_list.append(np.mean(z))
+        
+        print(height_list)

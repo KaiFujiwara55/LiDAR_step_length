@@ -84,49 +84,14 @@ for sec in sec_list:
                     if len(points) == 0:
                         continue
 
-                    # 2dの描画
-                    # y軸方向に揃える
-                    normalized_points = points - center_point
-                    normalized_points = def_method.rotate_points(normalized_points, theta_x=0, theta_y=0, theta_z=theta_z_list[0])
-                    points = def_method.rotate_points(points, theta_x=0, theta_y=0, theta_z=theta_z_list[0])
-
-                    center_x = np.sort(points[:, 0])[len(points)//2]
-                    left_leg = points[points[:, 0] < center_x]
-                    right_leg = points[points[:, 0] > center_x]
-                    if group_idx_2d not in left_leg_list.keys():
-                        left_leg_list[group_idx_2d] = []
-                        right_leg_list[group_idx_2d] = []
+                    # coefficientを使って領域を分ける
+                    left_leg = points[points[:, 0] < coefficent[0]*points[:, 1] + coefficent[1]]
+                    right_leg = points[points[:, 0] > coefficent[0]*points[:, 1] + coefficent[1]]
                     
                     if len(left_leg)>0:
                         left_leg_list[group_idx_2d].append([time_idx, np.mean(left_leg, axis=0)])
                     if len(right_leg)>0:
                         right_leg_list[group_idx_2d].append([time_idx, np.mean(right_leg, axis=0)])
-
-                    
-                    normalized_left_leg = normalized_points[normalized_points[:, 0] < 0]
-                    normalized_left_center = np.mean(normalized_left_leg, axis=0)
-                    normalized_right_leg = normalized_points[normalized_points[:, 0] > 0]
-                    normalized_right_center = np.mean(normalized_right_leg, axis=0)
-
-                    if True:
-                        fig = plt.figure()
-                        ax1 = fig.add_subplot(121)
-                        title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx_2d}_{time_idx}"
-                        ax1 = set_ax.set_ax(ax1, title=title, xlim=[pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]], ylim=[pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]])
-                        ax2 = fig.add_subplot(122)
-                        ax2 = set_ax.set_ax(ax2, title=title, xlim=[-250, 250], ylim=[-250, 250])
-
-                        ax1.scatter(left_leg[:, 0]+corect_x, left_leg[:, 1]+corect_y, c="b", s=1)
-                        ax1.scatter(right_leg[:, 0]+corect_x, right_leg[:, 1]+corect_y, c="r", s=1)
-                        ax2.scatter(normalized_left_leg[:, 0], normalized_left_leg[:, 1], c="b", s=1)
-                        ax2.scatter(normalized_right_leg[:, 0], normalized_right_leg[:, 1], c="r", s=1)
-
-                        plt.show()
-                        gif.save_fig(fig)
-                        plt.close()
-                output_path = f"/Users/kai/大学/小川研/LiDAR_step_length/gif/2d/{pcd_info_2d.dir_name}_0025s.gif"
-                gif.create_gif(output_path, duration=0.025)
-
 
         for group_idx in left_leg_list.keys():
             left_speed_list = []

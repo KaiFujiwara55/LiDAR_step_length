@@ -676,19 +676,23 @@ class cloud_method:
         return new_integraded_area_points_list, new_integraded_area_center_point_list
 
     # 身長を取得
-    def get_height_all(self, cloud_list, top_percent=0.5):
-        all_points = None
-        for cloud in cloud_list:
-            if all_points is None:
-                all_points = np.array(cloud)
-            else:
-                all_points = np.vstack((all_points, np.array(cloud)))
+    def get_height_all(self, integraded_area_points_list, top_percent=0.5):
+        height_list = []
+        for group_idx in range(len(integraded_area_points_list)):
+            all_points = None
+            for time_idx in range(len(integraded_area_points_list[group_idx])):
+                if all_points is None:
+                    all_points = integraded_area_points_list[group_idx][time_idx]
+                else:
+                    all_points = np.vstack([all_points, integraded_area_points_list[group_idx][time_idx]])
 
-        z = all_points[:, 2]
-        z = np.sort(z)[::-1]
-        z = z[:int(len(z)*top_percent/100)]
+            z = all_points[:, 2]
+            z = np.sort(z)[::-1]
+            z = z[:int(len(z)*top_percent/100)]
 
-        return np.mean(z)
+            height_list.append(np.mean(z))
+
+        return height_list
     
     # 進行方向に沿って, y軸が基準になるように回転させる角度を取得
     def get_collect_theta_z(self, integraded_area_center_point_list):
