@@ -51,7 +51,7 @@ for sec in sec_list:
         cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_2d.dir_name
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list_2(integraded_area_points_list_3d, integraded_area_center_point_list_3d, cloud_folder_path, sec=sec_2, is_incline=True)
         height = ori_method.get_height_all(pcd_info_3d.cloud_list)
-        theta_z_list = ori_method.get_collect_theta_z(integraded_area_points_list_3d, integraded_area_center_point_list_3d)
+        theta_z_list = ori_method.get_collect_theta_z(integraded_area_center_point_list_3d)
 
         left_leg_list = {}
         right_leg_list = {}
@@ -178,3 +178,34 @@ for sec in sec_list:
             plt.suptitle(f"{pcd_info_2d.dir_name}")
             plt.show()
             plt.close()
+
+
+            # 歩幅の取得
+            step_length_list = []
+
+            left_time_idx = left_speed_list[:, 0][left_peaks]
+            right_time_idx = right_speed_list[:, 0][right_peaks]
+            peak_time_idx_list = np.sort(np.concatenate([left_time_idx, right_time_idx]))
+            for i in range(1, len(peak_time_idx_list)):
+                before_time_idx = int(peak_time_idx_list[i-1])
+                after_time_idx = int(peak_time_idx_list[i])
+
+                before_point = integraded_area_center_point_list_2d[0][before_time_idx]
+                after_point = integraded_area_center_point_list_2d[0][after_time_idx]
+
+                step_length = ori_method.calc_points_distance(before_point, after_point)
+                
+                step_length_list.append(step_length)
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.hist(step_length_list, bins=55, range=(0, 1100))
+            title = f"step_hist"
+            ax.set_title(title)
+
+            fig.suptitle(f"{pcd_info_2d.dir_name}_{sec}s sampling={sec_2}s, window={window}", y=0)
+            plt.show()
+            plt.close()
+
+
+

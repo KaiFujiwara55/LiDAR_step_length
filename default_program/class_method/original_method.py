@@ -691,7 +691,7 @@ class cloud_method:
         return np.mean(z)
     
     # 進行方向に沿って, y軸が基準になるように回転させる角度を取得
-    def get_collect_theta_z(self, integraded_area_points_list, integraded_area_center_point_list):
+    def get_collect_theta_z(self, integraded_area_center_point_list):
         vector_list = self.get_vector(integraded_area_center_point_list)
         move_flg_list = self.judge_move(vector_list, threshold=1000)
         collect_theta_z_list = []
@@ -706,6 +706,28 @@ class cloud_method:
                 collect_theta_z_list.append(theta_z)
 
         return collect_theta_z_list
+
+    def normalization_points(self, points, center_point, x_flg=True, y_flg=True, z_flg=False):
+        """
+        点群を中心点をcenter_pointに正規化
+        引数:
+            points: np.array
+            center_point: np.array
+            x_flg: bool
+            y_flg: bool
+            z_flg: bool
+        返り値:
+            points: np.array
+        """
+        normalized_points = points.copy()
+        if x_flg:
+            normalized_points[:, 0] = points[:, 0] - center_point[0]
+        if y_flg:
+            normalized_points[:, 1] = points[:, 1] - center_point[1]
+        if z_flg:
+            normalized_points[:, 2] = points[:, 2] - center_point[2]
+        
+        return normalized_points
 
     # 進行方向に沿って, y軸が基準になるように回転
     def rotate_collect_cloud(self, cloud, theta_z):
