@@ -22,9 +22,12 @@ corect_y = 100
 sec_list = ["01"]
 for sec in sec_list:
     # データの読み込み
-    dir_list = glob.glob(f"/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_{sec}s/2d/*")
+    dir_list = glob.glob(f"/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_{sec}s/2d/*")
     for dir in dir_list:
-        if "mapping" in dir:
+        if "nothing" in dir:
+            continue
+
+        if "far" in dir:
             continue
         
         print(dir)
@@ -43,10 +46,10 @@ for sec in sec_list:
         time_area_points_list_3d, time_area_center_point_list_3d = ori_method.load_original_data(area_path_3d, center_path_3d)
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list(time_area_points_list_3d, time_area_center_point_list_3d, integrade_threshold=5)
         sec_2 = 0.1
-        cloud_folder_path = f"/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_01s/3d/"+pcd_info_3d.dir_name
+        cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_3d.dir_name
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list_2(integraded_area_points_list_3d, integraded_area_center_point_list_3d, cloud_folder_path, sec=sec_2, is_incline=False)
         height = ori_method.get_height_all(pcd_info_3d.cloud_list)
-        theta_z_list = ori_method.get_collect_theta_z(integraded_area_points_list_3d, integraded_area_center_point_list_3d)
+        theta_z_list = ori_method.get_collect_theta_z(integraded_area_center_point_list_3d)
 
         gif = create_gif.create_gif(False)
         for time_idx in range(min(len(time_area_points_list_2d), len(integraded_area_points_list_3d[0]))):

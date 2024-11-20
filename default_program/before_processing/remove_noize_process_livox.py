@@ -14,11 +14,10 @@ from default_program.class_method import original_method
 from default_program.class_method import get_pcd_information
 from default_program.class_method import create_gif
 
-# sec_list = ["015", "02", "025", "03"]
-sec_list = ["005", "0025"]
-correction_height = 1450
+sec_list = ["01"]
+correction_height = 1300
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/pcd_{sec}s/3d/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241120/pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()

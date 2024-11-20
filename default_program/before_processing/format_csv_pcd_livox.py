@@ -13,9 +13,9 @@ for grouping_sec in grouping_sec_list:
     # 変数の指定
     ##############################
     # 読み込むスキャンデータのパス, フォルダパスでも可
-    scan_data_path = "./20241113/source/3d/*.csv"
+    scan_data_path = "./20241120/source/3d/*.csv"
     # 出力するcsvフォルダのパス
-    output_data_path = "./20241113/pcd_"+str(grouping_sec).replace(".", "")+"s/3d/"
+    output_data_path = "./20241120/pcd_"+str(grouping_sec).replace(".", "")+"s/3d/"
     # 出力するcsvフォルダのパスの区切り文字
     split_char = "source/3d/"
     ##############################

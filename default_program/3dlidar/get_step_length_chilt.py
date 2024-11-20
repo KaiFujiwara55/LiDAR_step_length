@@ -4,6 +4,7 @@ import numpy as np
 import pcl
 import glob
 import time
+import scipy.stats
 import matplotlib.pyplot as plt
 
 sys.path.append("/Users/kai/大学/小川研/LiDAR_step_length/")
@@ -84,7 +85,15 @@ for sec in sec_list:
 
                         plt.show()
                         plt.close()
-                
+                # chilt_listを平均0で正規化
+                standard_chilt_list = scipy.stats.zscore(chilt_list)
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax.plot(chilt_list)
+                ax.plot(standard_chilt_list)
+                plt.show()
+                plt.close()
+
                 for time_idx in range(len(chilt_list)):   
                     points = integraded_area_points_list[group_idx][time_idx]
                     center_point = integraded_area_center_point_list[group_idx][time_idx]
@@ -110,8 +119,33 @@ for sec in sec_list:
                     # 傾きの変化をplot
                     ax2.plot(chilt_list)
                     ax2.plot([time_idx, time_idx], [np.min(chilt_list), np.max(chilt_list)], c="r")
-                    plt.show()
+                    # plt.show()
                     plt.close()
 
-
-
+                # 傾きが0で切り替わるタイミングをピークとする
+                peak_list = []
+                for time_idx in range(1, len(chilt_list)):
+                    before_chilt = chilt_list[time_idx-1]
+                    after_chilt = chilt_list[time_idx]
+                    if before_chilt*after_chilt < 0:
+                        if len(peak_list)==0:
+                            point = integraded_area_center_point_list[group_idx][time_idx]
+                            peak_list.append([time_idx, point])
+                        else:
+                            point = integraded_area_center_point_list[group_idx][time_idx]
+                            distance = ori_method.calc_points_distance(point, peak_list[-1][1])
+                            if distance > 400:
+                                peak_list.append([time_idx, point])
+                
+                # 歩幅を取得
+                step_length_list = []
+                for idx in range(1, len(peak_list)):
+                    step_length = ori_method.calc_points_distance(peak_list[idx][1], peak_list[idx-1][1])
+                    step_length_list.append(step_length)
+                
+                # 歩幅の分布をplot
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax.hist(step_length_list, bins=55, range=(0, 1100))
+                plt.show()
+                plt.close()

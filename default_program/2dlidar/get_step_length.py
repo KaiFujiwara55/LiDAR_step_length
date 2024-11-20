@@ -23,9 +23,12 @@ corect_y = 100
 sec_list = ["01"]
 for sec in sec_list:
     # データの読み込み
-    dir_list = glob.glob(f"/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_{sec}s/2d/*")
+    dir_list = glob.glob(f"/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_{sec}s/2d/*")
     for dir in dir_list:
-        if "mapping" in dir:
+        if "nothing" in dir:
+            continue
+
+        if "far" in dir:
             continue
         
         print(dir)
@@ -40,7 +43,7 @@ for sec in sec_list:
         time_area_points_list_2d, time_area_center_point_list_2d = ori_method.load_original_data(area_path_2d, center_path_2d)
         integraded_area_points_list_2d, integraded_area_center_point_list_2d = ori_method.grouping_points_list(time_area_points_list_2d, time_area_center_point_list_2d, integrade_threshold=3)
         sec_2 = 0.025
-        cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_"+str(sec_2).replace(".", "")+"s/2d/"+pcd_info_2d.dir_name
+        cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_2).replace(".", "")+"s/2d/"+pcd_info_2d.dir_name
         integraded_area_points_list_2d, integraded_area_center_point_list_2d = ori_method.grouping_points_list_2(integraded_area_points_list_2d, integraded_area_center_point_list_2d, cloud_folder_path, sec=sec_2, judge_move_threshold=500, is_incline=False)
 
         area_path_3d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/{sec}s/{pcd_info_3d.dir_name}"
@@ -48,7 +51,7 @@ for sec in sec_list:
         time_area_points_list_3d, time_area_center_point_list_3d = ori_method.load_original_data(area_path_3d, center_path_3d)
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list(time_area_points_list_3d, time_area_center_point_list_3d, integrade_threshold=5)
         sec_2 = 0.1
-        cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_2d.dir_name
+        cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_2d.dir_name
         integraded_area_points_list_3d, integraded_area_center_point_list_3d = ori_method.grouping_points_list_2(integraded_area_points_list_3d, integraded_area_center_point_list_3d, cloud_folder_path, sec=sec_2, is_incline=True)
         height = ori_method.get_height_all(pcd_info_3d.cloud_list)
         theta_z_list = ori_method.get_collect_theta_z(integraded_area_center_point_list_3d)
@@ -88,7 +91,7 @@ for sec in sec_list:
                     normalized_right_leg = normalized_points[normalized_points[:, 0] > 0]
                     normalized_right_center = np.mean(normalized_right_leg, axis=0)
 
-                    if False:
+                    if True:
                         fig = plt.figure()
                         ax1 = fig.add_subplot(121)
                         title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx_2d}_{time_idx}"
@@ -101,7 +104,7 @@ for sec in sec_list:
                         ax2.scatter(normalized_left_leg[:, 0], normalized_left_leg[:, 1], c="b", s=1)
                         ax2.scatter(normalized_right_leg[:, 0], normalized_right_leg[:, 1], c="r", s=1)
 
-                        # plt.show()
+                        plt.show()
                         gif.save_fig(fig)
                         plt.close()
                 output_path = f"/Users/kai/大学/小川研/LiDAR_step_length/gif/2d/{pcd_info_2d.dir_name}_0025s.gif"

@@ -13,11 +13,11 @@ for grouping_sec in grouping_sec_list:
     # 変数の指定
     ##############################
     # 読み込むスキャンデータのパス, フォルダパスでも可
-    scan_data_path = "./20241113/source/2d/*.csv"
+    scan_data_path = "./20241120/source/2d/*.csv"
     # 読み込むタイムデータのパス, フォルダパスでも可
-    time_data_path = "./20241113/source/time_list"
+    time_data_path = "./20241120/source/time_list"
     # 出力するcsvフォルダのパス
-    output_data_path = "./20241113/pcd_"+str(grouping_sec).replace(".", "")+"s/2d/"
+    output_data_path = "./20241120/pcd_"+str(grouping_sec).replace(".", "")+"s/2d/"
     # 出力するcsvフォルダのパスの区切り文字
     split_char = "source/2d/"
     ##############################

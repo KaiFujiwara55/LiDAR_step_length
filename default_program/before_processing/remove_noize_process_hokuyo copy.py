@@ -32,8 +32,8 @@ def get_noize_points(noize_folder):
     
     return noize_cloud, noize_points
 
-# noize_pointsとの距離がthreshold(mm)以上の点を残す
-def remove_noize(cloud, noize_points, threshold=50):
+# noize_pointsとの距離が50mm以上の点を残す
+def remove_noize(cloud, noize_points, threshold=300):
     points = np.array(cloud)
 
     new_points = None
@@ -67,10 +67,29 @@ for sec in sec_list:
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(active_folder)
 
+        set_ax = plot.set_plot()
+        set_ax.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
+
         time_area_points_list = []
         time_area_center_point_list = []
         for cloud in tqdm(pcd_info_list.cloud_list):
-            new_cloud, new_points = remove_noize(cloud, noize_points, threshold=300)
+            new_cloud, new_points = remove_noize(cloud, noize_points)
+
+            fig = plt.figure()
+            ax1 = fig.add_subplot(121)
+            ax2 = fig.add_subplot(122)
+
+            ax1 = set_ax.set_ax(ax1, title="before")
+            ax2 = set_ax.set_ax(ax2, title="after")
+
+            ax1.scatter(np.array(cloud)[:, 0], np.array(cloud)[:, 1], s=1)
+            ax1.scatter(noize_points[:, 0], noize_points[:, 1], s=1, c="r")
+            ax2.scatter(np.array(new_cloud)[:, 0], np.array(new_cloud)[:, 1], s=1)
+            
+            plt.show()
+            plt.close()
+            continue
+
 
             if new_cloud is None:
                 time_area_points_list.append([])
