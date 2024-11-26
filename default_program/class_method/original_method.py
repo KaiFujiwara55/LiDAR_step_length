@@ -194,7 +194,6 @@ class cloud_method:
             tmp_mins = []
             for group_idx in range(len(area_points_list)):
                 # 各時刻，各グループの中心座標に対して処理を行う
-                print(time_idx, group_idx, len(area_points_list), len(area_center_point_list))
                 area_center_point_xy = area_center_point_list[group_idx]
                 area_center_point_xy[2] = 0
                 

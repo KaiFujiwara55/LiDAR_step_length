@@ -13,9 +13,9 @@ from default_program.class_method import get_pcd_information
 from default_program.class_method import plot
 from default_program.class_method import create_gif
 
-sec_list = ["01"]
+sec_list = ["0025"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241120/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/2d/*")
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
@@ -59,10 +59,12 @@ for sec in sec_list:
         #         plt.show()
         #         plt.close()
 
+        gif = create_gif.create_gif(True)
         for time_idx in range(len(time_area_points_list_2d)):
             fig = plt.figure()
-            ax = fig.add_subplot(111)
-            ax = ax_set.set_ax(ax, title=f"{pcd_info_list.dir_name}_timeidx:{time_idx}")
+            ax1 = fig.add_subplot(211)
+            ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_timeidx:{time_idx}")
+            ax2 = fig.add_subplot(212)
             for group_idx in range(len(time_area_points_list_2d[time_idx])):
                 points = time_area_points_list_2d[time_idx][group_idx]
                 center_point = time_area_center_point_list_2d[time_idx][group_idx]
@@ -70,7 +72,24 @@ for sec in sec_list:
                 if len(center_point) == 0:
                     continue
                 
-                ax.scatter(points[:, 0], points[:, 1], s=1, c="b")
+                
+                center_point_2 = np.mean(points, axis=0)
+                left_leg = points[points[:, 1]>center_point_2[1]]
+                right_leg = points[points[:, 1]<center_point_2[1]]
+                
+                ax1.scatter(left_leg[:, 0], left_leg[:, 1], s=1, c="g")
+                ax1.scatter(right_leg[:, 0], right_leg[:, 1], s=1, c="r")
+                
+                ax2 = ax_set.set_ax(ax2, xlim=[center_point_2[0]-500, center_point_2[0]+500], ylim=[center_point_2[1]-500, center_point_2[1]+500])
+                
+                ax2.scatter(left_leg[:, 0], left_leg[:, 1], s=1, c="g")
+                ax2.scatter(np.mean(left_leg, axis=0)[0], np.mean(left_leg, axis=0)[1], s=10, c="g")
+                ax2.scatter(right_leg[:, 0], right_leg[:, 1], s=1, c="r")
+                ax2.scatter(np.mean(right_leg, axis=0)[0], np.mean(right_leg, axis=0)[1], s=10, c="r")
+
+
             plt.show()
+            gif.save_fig(fig)
             plt.close()
+        gif.create_gif("/Users/kai/大学/小川研/LiDAR_step_length/gif/separete/"+pcd_info_list.dir_name+"_center.gif")
 

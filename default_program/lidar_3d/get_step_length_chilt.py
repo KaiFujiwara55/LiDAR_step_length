@@ -16,7 +16,7 @@ from default_program.class_method import create_gif
 
 sec_list = ["01"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241120/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
@@ -45,7 +45,7 @@ for sec in sec_list:
 
         # 中心点の軌跡から新たにグループを作成
         sec_2 = 0.1
-        cloud_folder_path = f"/Users/kai/大学/小川研/Lidar_step_length/20241113/pcd_01s/3d/"+pcd_info_list.dir_name
+        cloud_folder_path = f"/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_01s/3d/"+pcd_info_list.dir_name
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, is_incline=False)
         height_list = ori_method.get_height_all(integraded_area_points_list, top_percent=0.1)
         collect_theta_z_list = ori_method.get_collect_theta_z(integraded_area_center_point_list)
@@ -98,11 +98,11 @@ for sec in sec_list:
                 # chilt_listを平均0で正規化
                 standard_chilt_list = np.array(chilt_list)
                 standard_chilt_list[:, 1] = scipy.stats.zscore(standard_chilt_list[:, 1])
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                ax.plot(standard_chilt_list[:, 0], standard_chilt_list[:, 1])
-                plt.show()
-                plt.close()
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111)
+                # ax.plot(standard_chilt_list[:, 0], standard_chilt_list[:, 1])
+                # plt.show()
+                # plt.close()
 
                 # 傾きが0で切り替わるタイミングをピークとする
                 peak_list = []
@@ -192,12 +192,14 @@ for sec in sec_list:
                 plt.show()
                 plt.close()
 
+                gif = create_gif.create_gif(True)
                 for time_idx in range(len(integraded_area_points_list[group_idx])):
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
+                    title = f"{pcd_info_list.dir_name}_{sec}s_{time_idx}"
+                    ax = ax_set.set_ax(ax, title=title, xlim=[0, 20000])
 
                     points = integraded_area_points_list[group_idx][time_idx]
-                    ax = ax_set.set_ax(ax, title="3d")
                     
                     ax.scatter(points[:, 0], points[:, 1], s=1)
 
@@ -206,5 +208,7 @@ for sec in sec_list:
                             ax.scatter(peak[1][0], peak[1][1], c="r", s=10)
                     
                     plt.show()
+                    gif.save_fig(fig)
                     plt.close()
+                gif.create_gif(f"/Users/kai/大学/小川研/LiDAR_step_length/gif/3d_step/{pcd_info_list.dir_name}_{sec}s.gif")
 

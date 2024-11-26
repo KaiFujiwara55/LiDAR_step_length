@@ -22,7 +22,7 @@ corect_y = 100
 
 sec_list = ["0025"]
 for sec in sec_list:
-    sec_2 = 0.1
+    sec_2 = 0.025
     # データの読み込み
     dir_list = glob.glob(f"/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_{sec}s/2d/*")
     for dir in dir_list:
@@ -31,8 +31,6 @@ for sec in sec_list:
         print(dir)
         pcd_info_2d = get_pcd_information.get_pcd_information()
         pcd_info_2d.load_pcd_dir(dir)
-        # pcd_info_3d = get_pcd_information.get_pcd_information()
-        # pcd_info_3d.load_pcd_dir(dir.replace("2d", "3d"))
         set_ax.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]), ylim=(pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]), zlim=(pcd_info_2d.get_all_min()[2], pcd_info_2d.get_all_max()[2]), azim=150)
 
         area_path_2d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/2d/{sec}s/{pcd_info_2d.dir_name}"
@@ -143,7 +141,6 @@ for sec in sec_list:
 
         # 歩幅の取得
         step_length_list = []
-
         left_time_idx = left_speed_list[:, 0][left_peaks]
         right_time_idx = right_speed_list[:, 0][right_peaks]
         peak_time_idx_list = np.sort(np.concatenate([left_time_idx, right_time_idx]))
@@ -158,36 +155,107 @@ for sec in sec_list:
             
             step_length_list.append(step_length)
 
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # ax.hist(step_length_list, bins=55, range=(0, 1100))
+        # title = f"step_hist_1"
+        # ax.set_title(title)
+
+        # fig.suptitle(f"{pcd_info_2d.dir_name}_{sec}s sampling={sec_2}s, window={window}", y=0)
+        # plt.show()
+        # plt.close()
+
+        # for time_idx in range(len(time_area_points_list_2d)):
+        #     points = time_points_list[time_idx]
+        #     if points is None:
+        #         continue
+        #     points = np.array(points)
+            
+        #     fig = plt.figure()
+        #     ax = fig.add_subplot(111)
+        #     title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx}_{time_idx}"
+        #     ax = set_ax.set_ax(ax, title=title, xlim=[0, 20000])
+        #     ax.scatter(points[:, 0], points[:, 1], s=1)
+            
+        #     for peak_time_idx in peak_time_idx_list:
+        #         if peak_time_idx <= time_idx:
+        #             ax.scatter(np.mean(time_points_list[int(peak_time_idx)], axis=0)[0], np.mean(time_points_list[int(peak_time_idx)], axis=0)[1], c="red", s=10)
+            
+        #     plt.show()
+        #     plt.close()
+
+        
+        # 歩幅の取得2
+        step_length_list = []
+        left_time_idx = left_speed_list[:, 0][left_peaks]
+        right_time_idx = right_speed_list[:, 0][right_peaks]
+        peak_time_idx_list = np.sort(np.concatenate([left_time_idx, right_time_idx]))
+        for i in range(1, len(peak_time_idx_list)):
+            before_time_idx = int(peak_time_idx_list[i-1])
+            before_points = time_points_list[before_time_idx]
+            after_time_idx = int(peak_time_idx_list[i])
+            after_points = time_points_list[after_time_idx]
+
+            if before_time_idx in left_time_idx:
+                before_bench_point = np.mean(before_points[before_points[:, 1]>np.mean(before_points, axis=0)[1]], axis=0)
+            else:
+                before_bench_point = np.mean(before_points[before_points[:, 1]<np.mean(before_points, axis=0)[1]], axis=0)
+            
+            if after_time_idx in left_time_idx:
+                after_bench_point = np.mean(after_points[after_points[:, 1]>np.mean(after_points, axis=0)[1]], axis=0)
+            else:
+                after_bench_point = np.mean(after_points[after_points[:, 1]<np.mean(after_points, axis=0)[1]], axis=0)
+
+            before_point = np.mean(time_points_list[before_time_idx], axis=0)
+            after_point = np.mean(time_points_list[after_time_idx], axis=0)
+
+            print(before_bench_point, after_bench_point)
+            step_length = ori_method.calc_points_distance(before_bench_point, after_bench_point)
+            
+            step_length_list.append(step_length)
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.hist(step_length_list, bins=55, range=(0, 1100))
-        title = f"step_hist"
+        title = f"{pcd_info_2d.dir_name}_step_hist"
         ax.set_title(title)
 
         fig.suptitle(f"{pcd_info_2d.dir_name}_{sec}s sampling={sec_2}s, window={window}", y=0)
         plt.show()
         plt.close()
 
-        continue
+        gif = create_gif.create_gif(False)
         for time_idx in range(len(time_area_points_list_2d)):
             points = time_points_list[time_idx]
-            if len(points) is None:
+            if points is None:
                 continue
             points = np.array(points)
-            
+
+            left_leg = points[points[:, 1]>np.mean(points, axis=0)[1]]
+            right_leg = points[points[:, 1]<np.mean(points, axis=0)[1]]
+
             fig = plt.figure()
             ax = fig.add_subplot(111)
             title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx}_{time_idx}"
-            ax = set_ax.set_ax(ax, title=title)
-            ax.scatter(points[:, 0], points[:, 1], s=1)
+            ax = set_ax.set_ax(ax, title=title, xlim=[0, 20000])
+            ax.scatter(left_leg[:, 0], left_leg[:, 1], s=1, c="blue", label="left_point")
+            ax.scatter(right_leg[:, 0], right_leg[:, 1], s=1, c="red", label="right_point")
             
-            for peak_time_idx in peak_time_idx_list:
-                if peak_time_idx <= time_idx:
-                    ax.scatter(np.mean(time_points_list[int(peak_time_idx)], axis=0)[0], np.mean(time_points_list[int(peak_time_idx)], axis=0)[1], c="red", s=10)
+            for tmp_time_idx in left_time_idx:
+                if tmp_time_idx <= time_idx:
+                    tmp_points = time_points_list[int(tmp_time_idx)]
+                    tmp_left_points = tmp_points[tmp_points[:, 1]>np.mean(tmp_points, axis=0)[1]]
+
+                    ax.scatter(np.mean(tmp_left_points, axis=0)[0], np.mean(tmp_left_points, axis=0)[1], c="blue", s=10)
+            for tmp_time_idx in right_time_idx:
+                if tmp_time_idx <= time_idx:
+                    tmp_points = time_points_list[int(tmp_time_idx)]
+                    tmp_right_points = tmp_points[tmp_points[:, 1]<np.mean(tmp_points, axis=0)[1]]
+
+                    ax.scatter(np.mean(tmp_right_points, axis=0)[0], np.mean(tmp_right_points, axis=0)[1], c="red", s=10)
             
+            plt.legend()
             plt.show()
+            gif.save_fig(fig)
             plt.close()
-
-
-
-
+        gif.create_gif(f"/Users/kai/大学/小川研/LiDAR_step_length/gif/2d_step/{pcd_info_2d.dir_name}_{sec}s_{sec_2}s.gif", duration=0.025)
