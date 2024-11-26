@@ -79,7 +79,7 @@ for sec in sec_list:
                 new_cloud = def_method.get_cloud(new_points)
                 new_cloud = def_method.statistical_outlier_removal(new_cloud)
 
-                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(new_cloud, radius=250, count_threshold=10)
+                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(new_cloud, radius=1000, count_threshold=5)
                 
                 time_area_points_list.append(area_points_list)
                 time_area_center_point_list.append(area_center_point_list)

@@ -194,6 +194,7 @@ class cloud_method:
             tmp_mins = []
             for group_idx in range(len(area_points_list)):
                 # 各時刻，各グループの中心座標に対して処理を行う
+                print(time_idx, group_idx, len(area_points_list), len(area_center_point_list))
                 area_center_point_xy = area_center_point_list[group_idx]
                 area_center_point_xy[2] = 0
                 
@@ -737,3 +738,29 @@ class cloud_method:
     def rotate_collect_cloud(self, cloud, theta_z):
         cloud = self.def_method.rotate_cloud(cloud, 0, 0, theta_z)
         return cloud
+
+    # 二つのグラフの交点を取得
+    def get_cross_points(self, x_list_1, y_list_1, x_list_2, y_list_2):
+        def line_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+            denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+            if denom == 0:
+                return None  # 平行な線分は交点がない
+            ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
+            ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
+            if 0 <= ua <= 1 and 0 <= ub <= 1:
+                x = x1 + ua * (x2 - x1)
+                y = y1 + ua * (y2 - y1)
+                return (x, y)
+            return None
+
+        cross_points = []
+        for i in range(len(x_list_1) - 1):
+            for j in range(len(x_list_2) - 1):
+                point = line_intersection(
+                    x_list_1[i], y_list_1[i], x_list_1[i + 1], y_list_1[i + 1],
+                    x_list_2[j], y_list_2[j], x_list_2[j + 1], y_list_2[j + 1]
+                )
+                if point:
+                    cross_points.append(point)
+        
+        return np.array(cross_points)

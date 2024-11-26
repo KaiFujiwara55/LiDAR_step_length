@@ -76,7 +76,6 @@ for sec in sec_list:
         left_leg_list = {}
         right_leg_list = {}
         for group_idx_2d in range(len(integraded_area_points_list_2d)):
-            gif = create_gif.create_gif(False)
             if ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list_2d), threshold=1000)[group_idx_2d]:
                 for time_idx in range(len(integraded_area_points_list_2d[group_idx_2d])):
                     points = np.array(integraded_area_points_list_2d[group_idx_2d][time_idx])
@@ -88,23 +87,6 @@ for sec in sec_list:
                     left_leg = points[points[:, 1] <= coefficent[0]*points[:, 0] + coefficent[1]]
                     right_leg = points[points[:, 1] >= coefficent[0]*points[:, 0] + coefficent[1]]
 
-                    # fig = plt.figure()
-                    # ax1 = fig.add_subplot(121)
-                    # title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx_2d}_{time_idx}"
-                    # ax1 = set_ax.set_ax(ax1, title=title)
-                    # ax2 = fig.add_subplot(122)
-                    # # ax2 = set_ax.set_ax(ax2, title=title)
-
-                    # ax1.scatter(left_leg[:, 0]+corect_x, left_leg[:, 1]+corect_y, c="b", s=1)
-                    # ax1.scatter(right_leg[:, 0]+corect_x, right_leg[:, 1]+corect_y, c="r", s=1)
-                    # ax2.scatter(left_leg[:, 0], left_leg[:, 1], c="b", s=1)
-                    # ax2.scatter(right_leg[:, 0], right_leg[:, 1], c="r", s=1)
-                    # ax2.plot(x, y, c="g")
-
-                    # plt.show()
-                    # gif.save_fig(fig)
-                    # plt.close()
-
                     if len(left_leg)>0:
                         if group_idx_2d not in left_leg_list.keys():
                             left_leg_list[group_idx_2d] = []
@@ -113,7 +95,6 @@ for sec in sec_list:
                         if group_idx_2d not in right_leg_list.keys():
                             right_leg_list[group_idx_2d] = []
                         right_leg_list[group_idx_2d].append([time_idx, np.mean(right_leg, axis=0)])
-                gif.create_gif(f"/Users/kai/大学/小川研/LiDAR_step_length/gif/2d/{pcd_info_2d.dir_name}_step.gif", duration=0.025)
 
         for group_idx in left_leg_list.keys():
             left_speed_list = []
@@ -152,25 +133,9 @@ for sec in sec_list:
             left_peaks, _ = find_peaks(inverted_left_speed_list, height=left_speed_mean, prominence=100)
             right_peaks, _ = find_peaks(inverted_right_speed_list, height=right_speed_mean, prominence=100)
             ######################################################################
-            
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-
-            ax.plot(left_speed_list[:, 0], left_speed_list[:, 1], label="left")
-            ax.scatter(left_speed_list[:, 0][left_peaks], left_speed_list[:, 1][left_peaks], c="green", label="left_peak", s=10)
-
-            ax.plot(right_speed_list[:, 0], right_speed_list[:, 1], label="right")
-            ax.scatter(right_speed_list[:, 0][right_peaks], right_speed_list[:, 1][right_peaks], c="red", label="right_peak", s=10)
-
-            plt.legend()
-            plt.suptitle(f"{pcd_info_2d.dir_name}")
-            plt.show()
-            plt.close()
-
 
             # 歩幅の取得
-            step_length_list = []
-
+            step_length_list_2d = []
             left_time_idx = left_speed_list[:, 0][left_peaks]
             right_time_idx = right_speed_list[:, 0][right_peaks]
             peak_time_idx_list = np.sort(np.concatenate([left_time_idx, right_time_idx]))
@@ -183,11 +148,11 @@ for sec in sec_list:
 
                 step_length = ori_method.calc_points_distance(before_point, after_point)
                 
-                step_length_list.append(step_length)
+                step_length_list_2d.append(step_length)
 
             fig = plt.figure()
             ax = fig.add_subplot(111)
-            ax.hist(step_length_list, bins=55, range=(0, 1100))
+            ax.hist(step_length_list_2d, bins=55, range=(0, 1100))
             title = f"step_hist"
             ax.set_title(title)
 
@@ -195,25 +160,6 @@ for sec in sec_list:
             plt.show()
             plt.close()
 
-
-            for time_idx in range(len(integraded_area_points_list_2d[group_idx])):
-                points = integraded_area_points_list_2d[group_idx][time_idx]
-                if len(points) == 0:
-                    continue
-                points = np.array(points)
-                
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                title = f"{pcd_info_2d.dir_name}_{sec}s_{group_idx}_{time_idx}"
-                ax = set_ax.set_ax(ax, title=title)
-                ax.scatter(points[:, 0], points[:, 1], s=1)
-                
-                for peak_time_idx in peak_time_idx_list:
-                    if peak_time_idx <= time_idx:
-                        ax.scatter(integraded_area_center_point_list_2d[group_idx][int(peak_time_idx)][0], integraded_area_center_point_list_2d[group_idx][int(peak_time_idx)][1], c="red", s=10)
-                
-                plt.show()
-                plt.close()
 
 
 

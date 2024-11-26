@@ -72,7 +72,7 @@ for sec in sec_list:
             x = np.linspace(0, 20000, 100)
             y = coefficent[0]*x + coefficent[1]
 
-        
+
         left_leg_list = {}
         right_leg_list = {}
         for group_idx_2d in range(len(integraded_area_points_list_2d)):
@@ -102,7 +102,6 @@ for sec in sec_list:
                     if len(right_leg)>0:
                         right_leg_list[group_idx_2d].append([time_idx, np.mean(right_leg, axis=0)])
 
-                    
                     normalized_left_leg = normalized_points[normalized_points[:, 0] < 0]
                     normalized_left_center = np.mean(normalized_left_leg, axis=0)
                     normalized_right_leg = normalized_points[normalized_points[:, 0] > 0]
