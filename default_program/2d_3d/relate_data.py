@@ -14,6 +14,7 @@ from default_program.class_method import create_gif
 
 from default_program.lidar_3d import get_step_length_chilt_func
 from default_program.lidar_2d import get_step_length_half_func
+from default_program.lidar_2d import get_step_length_test
 
 def_method = default_method.cloud_method()
 ori_method = original_method.cloud_method()
@@ -45,15 +46,20 @@ for dir in dir_list:
     pcd_info_3d = get_pcd_information.get_pcd_information()
     pcd_info_3d.load_pcd_dir(dir_3d)
 
-    set_ax_2d.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]), ylim=(pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]), zlim=(pcd_info_2d.get_all_min()[2], pcd_info_2d.get_all_max()[2]), azim=150)
-    set_ax_3d.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_3d.get_all_min()[0], pcd_info_3d.get_all_max()[0]), ylim=(pcd_info_3d.get_all_min()[1], pcd_info_3d.get_all_max()[1]), zlim=(pcd_info_3d.get_all_min()[2], pcd_info_3d.get_all_max()[2]), azim=150)
+    set_ax_2d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]), ylim=(pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]), zlim=(pcd_info_2d.get_all_min()[2], pcd_info_2d.get_all_max()[2]), azim=150)
+    set_ax_3d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_3d.get_all_min()[0], pcd_info_3d.get_all_max()[0]), ylim=(pcd_info_3d.get_all_min()[1], pcd_info_3d.get_all_max()[1]), zlim=(pcd_info_3d.get_all_min()[2], pcd_info_3d.get_all_max()[2]), azim=150)
 
     left_peak_list, right_peak_list, step_length_list_2d = get_step_length_half_func.get_step(0.025, dir_2d)
     peak_list, step_length_list_3d = get_step_length_chilt_func.get_step(sec_3d_1, sec_3d_2, dir_3d)
+    cross_points = get_step_length_test.get_step(0.025, dir_2d)
 
     # 2d
     peak_time_idx_2d = np.sort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))
     peak_points_2d = np.array([x[1] for x in left_peak_list]+[x[1] for x in right_peak_list])[np.argsort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))]
+    cofficient = np.polyfit(peak_points_2d[:, 0], peak_points_2d[:, 1], 1)
+    collect_theta_z = np.arctan(cofficient[0])
+    rotated_peak_points_2d = def_method.rotate_points(peak_points_2d, theta_z=-collect_theta_z)
+    
     
     # 3d
     peak_time_idx_3d = {}
@@ -65,7 +71,10 @@ for dir in dir_list:
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax = set_ax_2d.set_ax(ax, title=pcd_info_2d.dir_name, xlim=[0, 15000])
-    ax.scatter(peak_points_2d[:, 0], peak_points_2d[:, 1], s=5, c="b", label="2d")
+    # ax.scatter(peak_points_2d[:, 0], peak_points_2d[:, 1], s=5, c="b", label="2d")
+    # ax.scatter(rotated_peak_points_2d[:, 0], rotated_peak_points_2d[:, 1], s=5, c="g", label="rotated 2d")
+    ax.scatter(cross_points[:, 1], np.array([0 for _ in range(len(cross_points))]), s=5, c="b", label="2d")
+
 
     for group_idx in peak_points_3d.keys():
         ax.scatter(peak_points_3d[group_idx][:, 0], peak_points_3d[group_idx][:, 1], s=5, c="r", label="3d")
@@ -73,21 +82,23 @@ for dir in dir_list:
     plt.show()
     plt.close()
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
-    
-    ax1.hist(step_length_list_2d, bins=55, range=(0, 1100))
-    ax2.hist(step_length_list_3d[0], bins=55, range=(0, 1100))
-    
-    ax1.set_title("2d")
-    ax2.set_title("3d")
-    
-    plt.suptitle(pcd_info_2d.dir_name)
-    plt.tight_layout()
-    plt.show()
-    plt.close()
+    if False:
+        # ヒストグラム
+        fig = plt.figure()
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        
+        ax1.hist(step_length_list_2d, bins=55, range=(0, 1100))
+        ax2.hist(step_length_list_3d[0], bins=55, range=(0, 1100))
+        
+        ax1.set_title("2d")
+        ax2.set_title("3d")
+        
+        plt.suptitle(pcd_info_2d.dir_name)
+        plt.tight_layout()
+        plt.show()
+        plt.close()
 
-    # 平均値の比較
-    print("2d", np.mean(step_length_list_2d))
-    print("3d", np.mean(step_length_list_3d[0]))
+        # 平均値の比較
+        print("2d", np.mean(step_length_list_2d))
+        print("3d", np.mean(step_length_list_3d[0]))
