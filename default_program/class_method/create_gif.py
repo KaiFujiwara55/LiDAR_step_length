@@ -33,6 +33,12 @@ class create_gif:
         """GIF画像を作成する関数"""
         if not self.create_flg:
             return
+        
+        # 一時保存された画像がない場合は処理を終了
+        if len(self.image_paths) == 0:
+            self.remove()
+            return
+
         # 出力先のディレクトリが存在しない場合は作成
         self.create_dic("/".join(output_path.split("/")[:-1]))
 

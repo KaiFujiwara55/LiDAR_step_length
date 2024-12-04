@@ -14,7 +14,7 @@ from default_program.class_method import create_gif
 
 from default_program.lidar_3d import get_step_length_chilt_func
 from default_program.lidar_2d import get_step_length_half_func
-from default_program.lidar_2d import get_step_length_test
+from default_program.lidar_2d import get_step_length_article
 
 def_method = default_method.cloud_method()
 ori_method = original_method.cloud_method()
@@ -30,57 +30,109 @@ sec_3d_1 = 0.1
 sec_3d_2 = 0.1
 
 # データの読み込み
-dir_list = glob.glob("/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_3d_1).replace(".", "")+"s/3d/*")
+dir_list = glob.glob("/Users/kai/大学/小川研/Lidar_step_length/20241204/pcd_"+str(sec_3d_1).replace(".", "")+"s/3d/*")
 for dir in dir_list:
-    if "nothing" in dir or "mapping" in dir:
+    if not "cose_6" in dir:
         continue
-    if "far" in dir:
-        continue
+    
     print(dir)
 
-    dir_2d = dir.replace("3d", "2d")
-    dir_3d = dir.replace("2d", "3d")
-
-    pcd_info_2d = get_pcd_information.get_pcd_information()
-    pcd_info_2d.load_pcd_dir(dir_2d)
-    pcd_info_3d = get_pcd_information.get_pcd_information()
-    pcd_info_3d.load_pcd_dir(dir_3d)
-
-    set_ax_2d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]), ylim=(pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]), zlim=(pcd_info_2d.get_all_min()[2], pcd_info_2d.get_all_max()[2]), azim=150)
-    set_ax_3d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_3d.get_all_min()[0], pcd_info_3d.get_all_max()[0]), ylim=(pcd_info_3d.get_all_min()[1], pcd_info_3d.get_all_max()[1]), zlim=(pcd_info_3d.get_all_min()[2], pcd_info_3d.get_all_max()[2]), azim=150)
-
-    left_peak_list, right_peak_list, step_length_list_2d = get_step_length_half_func.get_step(0.025, dir_2d)
-    peak_list, step_length_list_3d = get_step_length_chilt_func.get_step(sec_3d_1, sec_3d_2, dir_3d)
-    cross_points = get_step_length_test.get_step(0.025, dir_2d)
-
-    # 2d
-    peak_time_idx_2d = np.sort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))
-    peak_points_2d = np.array([x[1] for x in left_peak_list]+[x[1] for x in right_peak_list])[np.argsort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))]
-    cofficient = np.polyfit(peak_points_2d[:, 0], peak_points_2d[:, 1], 1)
-    collect_theta_z = np.arctan(cofficient[0])
-    rotated_peak_points_2d = def_method.rotate_points(peak_points_2d, theta_z=-collect_theta_z)
-    
-    
-    # 3d
-    peak_time_idx_3d = {}
-    peak_points_3d = {}
-    for group_idx, group_peak in enumerate(peak_list):
-        peak_time_idx_3d[group_idx] = np.sort(np.array([x[0] for x in group_peak]))
-        peak_points_3d[group_idx] = np.array([x[1] for x in group_peak])[np.argsort(np.array([x[0] for x in group_peak]))]
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax = set_ax_2d.set_ax(ax, title=pcd_info_2d.dir_name, xlim=[0, 15000])
-    # ax.scatter(peak_points_2d[:, 0], peak_points_2d[:, 1], s=5, c="b", label="2d")
-    # ax.scatter(rotated_peak_points_2d[:, 0], rotated_peak_points_2d[:, 1], s=5, c="g", label="rotated 2d")
-    ax.scatter(cross_points[:, 1], np.array([0 for _ in range(len(cross_points))]), s=5, c="b", label="2d")
+    try:
+        dir_2d = dir.replace("3d", "2d").replace(str(sec_3d_1).replace(".", ""), str(sec_2d).replace(".", ""))
+        dir_3d = dir.replace("2d", "3d").replace(str(sec_2d).replace(".", ""), str(sec_3d_1).replace(".", ""))
 
 
-    for group_idx in peak_points_3d.keys():
-        ax.scatter(peak_points_3d[group_idx][:, 0], peak_points_3d[group_idx][:, 1], s=5, c="r", label="3d")
-    plt.legend()
-    plt.show()
-    plt.close()
+        pcd_info_2d = get_pcd_information.get_pcd_information()
+        pcd_info_2d.load_pcd_dir(dir_2d)
+        pcd_info_3d = get_pcd_information.get_pcd_information()
+        pcd_info_3d.load_pcd_dir(dir_3d)
+
+        set_ax_2d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_2d.get_all_min()[0], pcd_info_2d.get_all_max()[0]), ylim=(pcd_info_2d.get_all_min()[1], pcd_info_2d.get_all_max()[1]), zlim=(pcd_info_3d.get_all_min()[2], pcd_info_3d.get_all_max()[2]), azim=150)
+        set_ax_3d.set_ax_info(title="title", xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=(pcd_info_3d.get_all_min()[0], pcd_info_3d.get_all_max()[0]), ylim=(pcd_info_3d.get_all_min()[1], pcd_info_3d.get_all_max()[1]), zlim=(pcd_info_3d.get_all_min()[2], pcd_info_3d.get_all_max()[2]), azim=150)
+
+        left_peak_list, right_peak_list, step_length_list_2d = get_step_length_half_func.get_step(0.025, dir_2d)
+        peak_list, step_length_list_3d = get_step_length_chilt_func.get_step(sec_3d_1, sec_3d_2, dir_3d)
+        cross_points = get_step_length_article.get_step(0.025, dir_2d)
+
+        # 2dLidarの設置場所を設定
+        # x, y, z = (mm, mm, bool)
+        if "cose_1" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 200/np.sqrt(2), 200/np.sqrt(2), False
+        elif "cose_2" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 3500/np.sqrt(2), 3500/np.sqrt(2), False
+        elif "cose_3" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = (7000-200)/np.sqrt(2), (7000-200)/np.sqrt(2), False
+        elif "cose_4" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2)+200/np.sqrt(2), 7000/np.sqrt(2)-200/np.sqrt(2), True
+        elif "cose_5" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2)+3500/np.sqrt(2), 7000/np.sqrt(2)-3500/np.sqrt(2), True
+        elif "cose_6" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2)+7000/np.sqrt(2), 7000/np.sqrt(2)-7000/np.sqrt(2), True
+        elif "cose_7" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2), 7000/np.sqrt(2), False
+        elif "cose_8" in dir:
+            x_2d_lidar, y_2d_lidar, is_inverse = -200, 0, False
+        
+        # 2dの歩幅を取得する
+        peak_time_idx_2d = np.sort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))
+        peak_points_2d = np.array([x[1] for x in left_peak_list]+[x[1] for x in right_peak_list])[np.argsort(np.array([x[0] for x in left_peak_list]+[x[0] for x in right_peak_list]))]
+        cofficient = np.polyfit(peak_points_2d[:, 0], peak_points_2d[:, 1], 1)
+        collect_theta_z = np.arctan(cofficient[0])
+        rotated_peak_points_2d = def_method.rotate_points(peak_points_2d, theta_z=-collect_theta_z)
+        
+        # 3d
+        peak_time_idx_3d = {}
+        peak_points_3d = {}
+        for group_idx, group_peak in enumerate(peak_list):
+            peak_time_idx_3d[group_idx] = np.sort(np.array([x[0] for x in group_peak]))
+            peak_points_3d[group_idx] = np.array([x[1] for x in group_peak])[np.argsort(np.array([x[0] for x in group_peak]))]
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax = set_ax_2d.set_ax(ax, title=pcd_info_2d.dir_name, xlim=[0, 10000], ylim=[-5000, 5000])
+        # 補助線をひく
+        square_x = np.linspace(0, 7000/np.sqrt(2), 100)
+        y_square_down = np.tan(np.radians(-45))*square_x
+        y_square_up = np.tan(np.radians(45))*square_x
+        ax.plot(square_x, y_square_down, c="green", label="room_area")
+        ax.plot(square_x, y_square_up, c="green")
+        square_x = np.linspace(7000/np.sqrt(2), 7000/np.sqrt(2)*2, 100)
+        y_square_down = np.tan(np.radians(-45))*square_x+7000/np.sqrt(2)*2
+        y_square_up = np.tan(np.radians(45))*square_x-7000/np.sqrt(2)*2
+        ax.plot(square_x, y_square_down, c="green")
+        ax.plot(square_x, y_square_up, c="green")
+        x = np.linspace(0, 12000, 100)
+        y_down = np.tan(np.radians(-35.2))*x
+        y_up = np.tan(np.radians(35.2))*x
+        ax.plot(x, y_down, c="black", label="avia_range")
+        ax.plot(x, y_up, c="black")
+
+        # 3dのピーク点の線形近侍を行う
+        cofficient = np.polyfit(peak_points_3d[0][:, 0], peak_points_3d[0][:, 1], 1)
+        x = np.linspace(0, 10000, 100)
+        y = cofficient[0]*x + cofficient[1]
+        collect_radian = np.arctan(cofficient[0])
+
+        # LiDARの設置場所より補正を行う
+        collected_cross_points = np.array([[x[1], 0, 0] for x in cross_points])
+        # 2dLidarの設置場所によって、反転させるかを分ける
+        if is_inverse:
+            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian+np.pi)
+        else:
+            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian)
+        collected_cross_points += np.array([x_2d_lidar, y_2d_lidar, 0])
+        ax.scatter(collected_cross_points[:, 0], collected_cross_points[:, 1], s=5, c="orange", label="2d")
+
+        for group_idx in peak_points_3d.keys():
+            ax.scatter(peak_points_3d[group_idx][:, 0], peak_points_3d[group_idx][:, 1], s=5, c="r", label="3d")
+
+        plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
+        plt.show()
+        plt.close()
+    except Exception as e:
+        print("error:",e)
+        continue
+
 
     if False:
         # ヒストグラム

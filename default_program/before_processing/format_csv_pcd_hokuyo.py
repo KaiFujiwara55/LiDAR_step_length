@@ -7,19 +7,19 @@ import pcl
 
 
 # 何秒分のデータを1つのPCDファイルにまとめるか
-grouping_sec_list = [0.1, 0.05, 0.025]
+grouping_sec_list = [0.025]
 
 for grouping_sec in grouping_sec_list:
     # 変数の指定
     ##############################
     # 読み込むスキャンデータのパス, フォルダパスでも可
-    scan_data_path = "./20241120/source/2d/*.csv"
+    scan_data_path = "./20241204/2d/*.csv"
     # 読み込むタイムデータのパス, フォルダパスでも可
-    time_data_path = "./20241120/source/time_list"
+    time_data_path = "./20241204/time_list"
     # 出力するcsvフォルダのパス
-    output_data_path = "./20241120/pcd_"+str(grouping_sec).replace(".", "")+"s/2d/"
+    output_data_path = "./20241204/pcd_"+str(grouping_sec).replace(".", "")+"s/2d/"
     # 出力するcsvフォルダのパスの区切り文字
-    split_char = "source/2d/"
+    split_char = "20241204/2d/"
     ##############################
 
     def format_livox_csv(scan_data_file, output_data_path, time_data_file):

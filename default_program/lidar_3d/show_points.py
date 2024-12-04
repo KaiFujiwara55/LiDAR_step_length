@@ -13,7 +13,7 @@ from default_program.class_method import create_gif
 
 sec_list = ["01"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241113/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
@@ -27,7 +27,10 @@ for sec in sec_list:
         pcd_info_list.load_pcd_dir(dir)
         # plot用のaxのdefault設定
         ax_set = plot.set_plot()
-        ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
+        ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=180)
+        
+        if ("cose_3_1_t" not in dir and "cose_4_1_f" not in dir and "cose_6_0_f" not in dir and "cose_6_0_y" not in dir):
+            continue
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
         # 処理結果を読み込み
@@ -35,21 +38,21 @@ for sec in sec_list:
         center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/3d/{sec}s/{pcd_info_list.dir_name}"
         time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
 
-        for time_idx in range(len(time_area_points_list)):
-            if len(time_area_points_list[time_idx]) == 0:
-                continue
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax = ax_set.set_ax(ax)
-            for group_idx in range(len(time_area_points_list[time_idx])):
-                points = time_area_points_list[time_idx][group_idx]
-                if len(points) == 0:
-                    continue
-                points = np.array(points)
+        # for time_idx in range(len(time_area_points_list)):
+        #     if len(time_area_points_list[time_idx]) == 0:
+        #         continue
+        #     fig = plt.figure()
+        #     ax = fig.add_subplot(111, projection='3d')
+        #     ax = ax_set.set_ax(ax)
+        #     for group_idx in range(len(time_area_points_list[time_idx])):
+        #         points = time_area_points_list[time_idx][group_idx]
+        #         if len(points) == 0:
+        #             continue
+        #         points = np.array(points)
 
-                ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
-            # plt.show()
-            plt.close()
+        #         ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
+        #     plt.show()
+        #     plt.close()
 
         # 点群をグループ化
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
@@ -60,6 +63,7 @@ for sec in sec_list:
         integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, is_incline=False)
         move_flg_list = ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list))
 
+        gif = create_gif.create_gif(False)
         for group_idx in range(len(integraded_area_points_list)):
             if move_flg_list[group_idx]:
                 for time_idx in range(len(integraded_area_points_list[0])):
@@ -68,12 +72,15 @@ for sec in sec_list:
                     if len(center_point) > 0:
                         fig = plt.figure()
                         ax1 = fig.add_subplot(121, projection='3d')
-                        ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_{sec}s, group_idx:{group_idx}, time_idx:{time_idx}")
+                        ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_{sec}s, group_idx:{group_idx}, time_idx:{time_idx}", xlim=[0, 11000], ylim=[-5000, 5000], zlim=[0, 2000])
                         ax1.scatter(points[:, 0], points[:, 1], points[:, 2], s=1, c="blue")
                         ax1.scatter(center_point[0], center_point[1], center_point[2], s=10, c="red")
-                        plt.show()
-                        plt.close()
 
+                        plt.show()
+                        gif.save_fig(fig)
+                        plt.close()
+        output_path = "/Users/kai/大学/小川研/LiDAR_step_length/gif/3d_raw_cloud/"+pcd_info_list.dir_name+".gif"
+        gif.create_gif(output_path, duration=0.1)
         continue
         # 時系列ごとでの点群表示
         move_flg_list = ori_method.judge_move(integraded_area_center_point_list)

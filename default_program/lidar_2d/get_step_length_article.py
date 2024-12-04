@@ -3,8 +3,6 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-from tqdm import tqdm
-from scipy.signal import find_peaks
 
 sys.path.append("/Users/kai/大学/小川研/Lidar_step_length")
 from default_program.class_method import get_pcd_information
@@ -78,7 +76,13 @@ def get_step(sec, dir):
         
         right_leg_2 = np.array(tmp_points)
 
-        
+        # 円形でフィッティングして中心を求めるコードを書かなければいけない
+
+        # 平均値で基準を取得
+        if len(left_leg)>0:
+            left_leg_list.append([time_idx, np.mean(left_leg_2, axis=0)])
+        if len(right_leg)>0:
+            right_leg_list.append([time_idx, np.mean(right_leg_2, axis=0)])
 
         if False:
             center_point = np.mean(time_points, axis=0)
@@ -100,11 +104,6 @@ def get_step(sec, dir):
 
             plt.show()
             plt.close()
-
-        if len(left_leg)>0:
-            left_leg_list.append([time_idx, np.mean(left_leg_2, axis=0)])
-        if len(right_leg)>0:
-            right_leg_list.append([time_idx, np.mean(right_leg_2, axis=0)])
 
     left_speed_list = []
     for i in range(1, len(left_leg_list)):
@@ -133,46 +132,26 @@ def get_step(sec, dir):
     # ピークの取得
     cross_points = ori_method.get_cross_points(left_speed_list[:, 0], left_speed_list[:, 1], right_speed_list[:, 0], right_speed_list[:, 1])
 
-    if False:
-        left_peak_list = []
-        right_peak_list = []
-        for i in range(len(cross_points)-1):
-            pick_left = left_speed_list[(left_speed_list[:, 0] >= cross_points[i][0]) & (left_speed_list[:, 0] <= cross_points[i+1][0])]
-            pick_left_mean = np.mean(pick_left[:, 1])
-            pick_right = right_speed_list[(right_speed_list[:, 0] >= cross_points[i][0]) & (right_speed_list[:, 0] <= cross_points[i+1][0])]
-            pick_right_mean = np.mean(pick_right[:, 1])
-
-            if pick_left_mean > pick_right_mean:
-                min_time_idx = int(pick_right[np.argmin(pick_right[:, 1])][0])
-                min_idx = np.argwhere(right_speed_list[:, 0] == min_time_idx)[0][0]
-                
-                right_peak_list.append([min_time_idx, right_leg_list[min_idx][1]])
-            else:
-                min_time_idx = int(pick_left[np.argmin(pick_left[:, 1])][0])
-                min_idx = np.argwhere(left_speed_list[:, 0] == min_time_idx)[0][0]
-                
-                left_peak_list.append([min_time_idx, left_leg_list[min_idx][1]])
-    else:
-        threshold = 50
-        is_left_stand_list = []
-        for i in range(1, len(left_leg_list)-1):
-            before_distance = abs(left_leg_list[i-1][1][0]-left_leg_list[i][1][0])
-            after_distance = abs(left_leg_list[i][1][0]-left_leg_list[i+1][1][0])
-            
-            if before_distance < threshold and after_distance < threshold:
-                is_left_stand_list.append(True)
-            else:
-                is_left_stand_list.append(False)
+    threshold = 50
+    is_left_stand_list = []
+    for i in range(1, len(left_leg_list)-1):
+        before_distance = abs(left_leg_list[i-1][1][0]-left_leg_list[i][1][0])
+        after_distance = abs(left_leg_list[i][1][0]-left_leg_list[i+1][1][0])
         
-        is_right_stand_list = []
-        for i in range(1, len(right_leg_list)-1):
-            before_distance = abs(right_leg_list[i-1][1][0]-right_leg_list[i][1][0])
-            after_distance = abs(right_leg_list[i][1][0]-right_leg_list[i+1][1][0])
-            
-            if before_distance < threshold and after_distance < threshold:
-                is_right_stand_list.append(True)
-            else:
-                is_right_stand_list.append(False)
+        if before_distance < threshold and after_distance < threshold:
+            is_left_stand_list.append(True)
+        else:
+            is_left_stand_list.append(False)
+    
+    is_right_stand_list = []
+    for i in range(1, len(right_leg_list)-1):
+        before_distance = abs(right_leg_list[i-1][1][0]-right_leg_list[i][1][0])
+        after_distance = abs(right_leg_list[i][1][0]-right_leg_list[i+1][1][0])
+        
+        if before_distance < threshold and after_distance < threshold:
+            is_right_stand_list.append(True)
+        else:
+            is_right_stand_list.append(False)
     
     left_stand_phase_list = []
     for idx in range(len(is_left_stand_list)-2):
@@ -297,7 +276,7 @@ def get_step(sec, dir):
 
     cross_points = ori_method.get_cross_points(left_x, left_y, right_x, right_y)
 
-    if True:
+    if False:
         fig = plt.figure()
         ax1 = fig.add_subplot(211)
         ax1.scatter(np.array(left_stand_points)[:, 0]*0.025, np.array(left_stand_points)[:, 1], color="orange", label="left_stand", s=1)
@@ -324,17 +303,3 @@ def get_step(sec, dir):
         plt.close()
 
     return cross_points
-
-    # 歩幅の取得  
-    step_length_list = []
-    sort_time_idx = np.argsort(np.concatenate([np.array([x[0] for x in left_peak_list]), np.array([x[0] for x in right_peak_list])]))
-    peak_point_list = np.concatenate([np.array([x[1] for x in left_peak_list]), np.array([x[1] for x in right_peak_list])])[sort_time_idx]
-    for i in range(1, len(peak_point_list)):
-        before_point = peak_point_list[i-1]
-        after_point = peak_point_list[i]
-
-        step_length = ori_method.calc_points_distance(before_point, after_point)
-        
-        step_length_list.append(step_length)
-    
-    return left_peak_list, right_peak_list, step_length_list

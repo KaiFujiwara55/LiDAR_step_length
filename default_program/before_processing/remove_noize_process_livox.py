@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pcl
 import glob
-import time
+import timess
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -17,7 +17,7 @@ from default_program.class_method import create_gif
 sec_list = ["01"]
 correction_height = 1300
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241120/pcd_{sec}s/3d/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
@@ -29,8 +29,15 @@ for sec in sec_list:
 
         set_ax = plot.set_plot()
         set_ax.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
+        
+        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/{sec}s/{pcd_info_list.dir_name}"
+        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/3d/{sec}s/{pcd_info_list.dir_name}"
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
+
+        if os.path.exists(area_path):
+            print("すでに処理済")
+            continue
 
         time_cloud = []
         time_area_points_list = []
@@ -83,15 +90,17 @@ for sec in sec_list:
             std_dev_mul_thresh = 1.0
             statistical_filtered_cloud = def_method.statistical_outlier_removal(filtered_cloud, mean_k, std_dev_mul_thresh)
 
-            # 領域内の点群を取得
-            area_points_list, area_center_point_list = ori_method.get_neighborhood_points(statistical_filtered_cloud, radius=250)
+            if statistical_filtered_cloud.size == 0:
+                time_area_points_list.append([])
+                time_area_center_point_list.append([])
+            else:
+                # 領域内の点群を取得
+                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(statistical_filtered_cloud, radius=250)
 
-            # 時系列の点群を保存
-            time_cloud.append(statistical_filtered_cloud)
-            time_area_points_list.append(area_points_list)
-            time_area_center_point_list.append(area_center_point_list)
+                # 時系列の点群を保存
+                time_cloud.append(statistical_filtered_cloud)
+                time_area_points_list.append(area_points_list)
+                time_area_center_point_list.append(area_center_point_list)
 
         # 処理結果を保存
-        area_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/{sec}s/{pcd_info_list.dir_name}"
-        center_path = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/3d/{sec}s/{pcd_info_list.dir_name}"
         ori_method.save_original_data(time_area_points_list, time_area_center_point_list, area_path, center_path)

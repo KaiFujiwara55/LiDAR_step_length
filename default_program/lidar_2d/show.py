@@ -15,7 +15,7 @@ from default_program.class_method import create_gif
 
 sec_list = ["0025"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241120/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/2d/*")
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
@@ -30,40 +30,29 @@ for sec in sec_list:
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
+        
+        print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
+        if "cose_8_1_t_1204" in dir or "cose_1_0_y_1204" in dir:
+            continue
+
+        # エラー吐いた奴ら
+        if "cose_2_1_t_1204" in dir:
+            continue
+        
         # plot用のaxのdefault設定
         ax_set = plot.set_plot()
         ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
 
-        print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
         # 処理結果を読み込み
         area_path_2d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/2d/{sec}s/{pcd_info_list.dir_name}"
         center_path_2d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/2d/{sec}s/{pcd_info_list.dir_name}"
         time_area_points_list_2d, time_area_center_point_list_2d = ori_method.load_original_data(area_path_2d, center_path_2d)
-        # integraded_area_points_list_2d, integraded_area_center_point_list_2d = ori_method.grouping_points_list(time_area_points_list_2d, time_area_center_point_list_2d, integrade_threshold=3)
-        # sec_2 = 0.025
-        # cloud_folder_path = "/Users/kai/大学/小川研/Lidar_step_length/20241120/pcd_"+str(sec_2).replace(".", "")+"s/2d/"+pcd_info_list.dir_name
-        # integraded_area_points_list_2d, integraded_area_center_point_list_2d = ori_method.grouping_points_list_2(integraded_area_points_list_2d, integraded_area_center_point_list_2d, cloud_folder_path, sec=sec_2, judge_move_threshold=500, is_incline=False)
-        
-        # for group_idx in range(len(integraded_area_points_list_2d)):
-        #     for time_idx in range(len(integraded_area_points_list_2d[group_idx])):
-        #         points = integraded_area_points_list_2d[group_idx][time_idx]
-        #         center_point = integraded_area_center_point_list_2d[group_idx][time_idx]
-        #         if len(center_point) == 0:
-        #             continue
 
-        #         fig = plt.figure()
-        #         ax = fig.add_subplot(111)
-        #         ax = ax_set.set_ax(ax, title=f"{pcd_info_list.dir_name}_group:{group_idx}_timeidx:{time_idx}")
-        #         color_list = ["b", "g", "r", "c", "m", "y", "k"]*10
-        #         ax.scatter(points[:, 0], points[:, 1], s=1, c=color_list[group_idx])
-        #         plt.show()
-        #         plt.close()
-
-        gif = create_gif.create_gif(True)
+        gif = create_gif.create_gif(False)
         for time_idx in range(len(time_area_points_list_2d)):
             fig = plt.figure()
             ax1 = fig.add_subplot(211)
-            ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_timeidx:{time_idx}")
+            ax1 = ax_set.set_ax(ax1, title=f"{pcd_info_list.dir_name}_timeidx:{time_idx}", xlim=[0, 10000], ylim=[-500, 500])
             ax2 = fig.add_subplot(212)
             for group_idx in range(len(time_area_points_list_2d[time_idx])):
                 points = time_area_points_list_2d[time_idx][group_idx]

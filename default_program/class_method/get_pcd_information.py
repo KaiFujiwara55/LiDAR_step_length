@@ -61,14 +61,16 @@ class get_pcd_information:
         """時系列分のPCDファイル内での点群の座標の最大値を取得"""
         max = []
         for points in self.points_list:
-            max.append(self.get_max(points))
+            if len(points) > 0:
+                max.append(self.get_max(points))
         return np.max(max, axis=0)
     
     def get_all_min(self):
         """時系列分のPCDファイル内での点群の座標の最小値を取得"""
         min = []
         for points in self.points_list:
-            min.append(self.get_min(points))
+            if len(points) > 0:            
+                min.append(self.get_min(points))
 
         return np.min(min, axis=0)
 
