@@ -58,7 +58,8 @@ def get_step(sec, dir):
         left_leg = time_points[:center_idx]
         right_leg = time_points[center_idx:]
 
-
+        if len(left_leg)==0 or len(right_leg)==0:
+            continue
         # 外れ値除外
         left_median_point = left_leg[len(left_leg)//2]
         tmp_points = []

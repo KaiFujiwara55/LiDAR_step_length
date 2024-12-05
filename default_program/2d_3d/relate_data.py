@@ -31,10 +31,12 @@ sec_3d_2 = 0.1
 
 # データの読み込み
 dir_list = glob.glob("/Users/kai/大学/小川研/Lidar_step_length/20241204/pcd_"+str(sec_3d_1).replace(".", "")+"s/3d/*")
+dir_list = sorted(dir_list)
+
 for dir in dir_list:
     if not "cose_6" in dir:
         continue
-    
+
     print(dir)
 
     try:
@@ -94,34 +96,34 @@ for dir in dir_list:
         square_x = np.linspace(0, 7000/np.sqrt(2), 100)
         y_square_down = np.tan(np.radians(-45))*square_x
         y_square_up = np.tan(np.radians(45))*square_x
-        ax.plot(square_x, y_square_down, c="green", label="room_area")
-        ax.plot(square_x, y_square_up, c="green")
+        ax.plot(square_x, y_square_down, c="yellow", label="room_area")
+        ax.plot(square_x, y_square_up, c="yellow")
         square_x = np.linspace(7000/np.sqrt(2), 7000/np.sqrt(2)*2, 100)
         y_square_down = np.tan(np.radians(-45))*square_x+7000/np.sqrt(2)*2
         y_square_up = np.tan(np.radians(45))*square_x-7000/np.sqrt(2)*2
-        ax.plot(square_x, y_square_down, c="green")
-        ax.plot(square_x, y_square_up, c="green")
+        ax.plot(square_x, y_square_down, c="yellow")
+        ax.plot(square_x, y_square_up, c="yellow")
         x = np.linspace(0, 12000, 100)
         y_down = np.tan(np.radians(-35.2))*x
         y_up = np.tan(np.radians(35.2))*x
         ax.plot(x, y_down, c="black", label="avia_range")
         ax.plot(x, y_up, c="black")
 
-        # 3dのピーク点の線形近侍を行う
+        # 3dのピーク点の線形近似を行う
         cofficient = np.polyfit(peak_points_3d[0][:, 0], peak_points_3d[0][:, 1], 1)
         x = np.linspace(0, 10000, 100)
         y = cofficient[0]*x + cofficient[1]
-        collect_radian = np.arctan(cofficient[0])
+        collect_radian_2d = np.arctan(cofficient[0])
 
         # LiDARの設置場所より補正を行う
         collected_cross_points = np.array([[x[1], 0, 0] for x in cross_points])
         # 2dLidarの設置場所によって、反転させるかを分ける
         if is_inverse:
-            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian+np.pi)
+            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian_2d+np.pi)
         else:
-            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian)
+            collected_cross_points = def_method.rotate_points(collected_cross_points, theta_z=collect_radian_2d)
         collected_cross_points += np.array([x_2d_lidar, y_2d_lidar, 0])
-        ax.scatter(collected_cross_points[:, 0], collected_cross_points[:, 1], s=5, c="orange", label="2d")
+        ax.scatter(collected_cross_points[:, 0], collected_cross_points[:, 1], s=5, c="blue", label="2d")
 
         for group_idx in peak_points_3d.keys():
             ax.scatter(peak_points_3d[group_idx][:, 0], peak_points_3d[group_idx][:, 1], s=5, c="r", label="3d")
@@ -130,7 +132,8 @@ for dir in dir_list:
         plt.show()
         plt.close()
     except Exception as e:
-        print("error:",e)
+        import traceback
+        print(traceback.format_exc())
         continue
 
 
