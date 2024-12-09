@@ -18,9 +18,14 @@ from default_program.class_method import create_gif
 def_method = default_method.cloud_method()
 ori_method = original_method.cloud_method()
 
-def get_step(sec_1, sec_2, dir):
+# plotの設定
+set_ax = plot.set_plot()
+
+def get_step(sec_1, sec_2, dir, plt_flg=False):
     pcd_info_list = get_pcd_information.get_pcd_information()
     pcd_info_list.load_pcd_dir(dir)
+
+    set_ax.set_ax_info(pcd_info_list.dir_name, xlabel="X(mm)", ylabel="Y(mm)", zlabel="Z(mm)", xlim=[pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]], ylim=[pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]], zlim=[pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]])
 
     # 処理結果を読み込み
     area_path = "/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/3d/"+str(sec_1).replace(".", "")+"s/"+pcd_info_list.dir_name
@@ -92,6 +97,16 @@ def get_step(sec_1, sec_2, dir):
                         if distance > 400:
                             peak_list.append([peak_time_idx, point])
             
+            if plt_flg:
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax = set_ax.set_ax(ax, title=pcd_info_list.dir_name+"_chilt",xlabel="time (ms)", ylabel="chilt", xlim=[0, np.max(standard_chilt_list)*25], ylim=[np.min(standard_chilt_list[:, 1]), np.max(standard_chilt_list[:, 1])], is_box_aspect=False)
+                ax.plot(standard_chilt_list[:, 0]*25, standard_chilt_list[:, 1])
+                for peak in peak_list:
+                    ax.scatter(peak[0]*25, 0, c="r", s=5)
+                plt.show()
+                plt.close()
+
             # 歩幅を取得
             step_length_list = []
             for idx in range(1, len(peak_list)):
@@ -102,3 +117,4 @@ def get_step(sec_1, sec_2, dir):
             step_length_list_list.append(step_length_list)
 
     return peak_list_list, step_length_list_list
+

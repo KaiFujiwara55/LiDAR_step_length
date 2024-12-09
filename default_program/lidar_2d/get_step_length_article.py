@@ -244,8 +244,12 @@ def get_step(sec, dir):
         if idx==0 and right_stand_points_list[idx][0]!=0:
             swing_time_idx_list = np.array(range(0, right_stand_points_list[idx][0]))
             swing_point_list = np.array([x[1][0] for x in right_leg_list[0:right_stand_points_list[idx][0]]])
-            cofficient = np.polyfit(swing_time_idx_list, swing_point_list, 1)
-            swing_distance_list = swing_time_idx_list*cofficient[0] + cofficient[1]
+
+            if len(swing_time_idx_list)>1:
+                cofficient = np.polyfit(swing_time_idx_list, swing_point_list, 1)
+                swing_distance_list = swing_time_idx_list*cofficient[0] + cofficient[1]
+            else:
+                swing_distance_list = swing_point_list
 
             if right_x is None:
                 right_x = swing_time_idx_list

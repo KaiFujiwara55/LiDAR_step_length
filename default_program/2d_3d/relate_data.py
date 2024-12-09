@@ -34,7 +34,7 @@ dir_list = glob.glob("/Users/kai/大学/小川研/Lidar_step_length/20241204/pcd
 dir_list = sorted(dir_list)
 
 for dir in dir_list:
-    if not "cose_6" in dir:
+    if not "cose_4" in dir:
         continue
 
     print(dir)
@@ -71,7 +71,7 @@ for dir in dir_list:
         elif "cose_6" in dir:
             x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2)+7000/np.sqrt(2), 7000/np.sqrt(2)-7000/np.sqrt(2), True
         elif "cose_7" in dir:
-            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2), 7000/np.sqrt(2), False
+            x_2d_lidar, y_2d_lidar, is_inverse = 7000/np.sqrt(2), 7000/np.sqrt(2), True
         elif "cose_8" in dir:
             x_2d_lidar, y_2d_lidar, is_inverse = -200, 0, False
         

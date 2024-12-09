@@ -164,20 +164,23 @@ class cloud_method:
     
         return area_points_list, area_center_point_list
 
-    def grouping_points_list(self, time_area_points_list, time_area_center_point_list, integrade_threshold=5):
+    def grouping_points_list(self, time_area_points_list, time_area_center_point_list, integrade_threshold=5, distance_threshold=250):
         """
         時系列の点群のグループを統合
         引数:
             time_area_points_list: list
             time_area_point_list: list
             integrade_threshold: int
+            distance_threshold: int (mm)
         返り値:
             integraded_area_points_list: list
             integraded_area_point_list: list
 
-        integrade_threshold: 孤立点群をノイズとして除去するための閾値
+
         integraded_area_points_list: 統合された点群のグループのリスト
         integraded_area_point_list: 統合された点群のグループの基準点のリスト
+        integrade_threshold: 孤立点群をノイズとして除去するための閾値
+        distance_threshold: 統合するための距離の閾値
         """
 
         label_idx_list = []
@@ -187,8 +190,6 @@ class cloud_method:
             # 時系列の中心点のlistを取得
             area_points_list = time_area_points_list[time_idx]
             area_center_point_list = time_area_center_point_list[time_idx]
-            
-            theshold = 250
 
             # tmp_mis = [[gropu_idx, [group_idx2, diff1]], group_idx, [group_idx2, diff2]...]
             tmp_mins = []
@@ -208,7 +209,7 @@ class cloud_method:
                         if not before_label_idx1 == -1:
                             before_label_person_center_point1 = time_area_center_point_list[time_idx-1][before_label_idx1]
                             distance1 = self.calc_points_distance(area_center_point_xy, before_label_person_center_point1)
-                            if distance1 < theshold:
+                            if distance1 < distance_threshold:
                                 if tmp_min is None:
                                     tmp_min = [group_idx2, distance1]
                                 else:
@@ -221,7 +222,7 @@ class cloud_method:
                                 before_label_person_center_point2 = time_area_center_point_list[time_idx-2][before_label_idx2]
                                 distance2 = self.calc_points_distance(area_center_point_xy, before_label_person_center_point2)
                                 
-                                if distance2 < theshold:
+                                if distance2 < distance_threshold:
                                     if tmp_min is None:
                                         tmp_min = [group_idx2, distance2]
                                     else:
@@ -684,8 +685,9 @@ class cloud_method:
                 if all_points is None:
                     all_points = integraded_area_points_list[group_idx][time_idx]
                 else:
+                    if len(integraded_area_points_list[group_idx][time_idx][0])==0:
+                        continue
                     all_points = np.vstack([all_points, integraded_area_points_list[group_idx][time_idx]])
-
             z = all_points[:, 2]
             z = np.sort(z)[::-1]
             z = z[:int(len(z)*top_percent/100)]

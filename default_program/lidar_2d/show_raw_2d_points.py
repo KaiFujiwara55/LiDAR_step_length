@@ -30,8 +30,6 @@ for sec in sec_list:
     ori_method = original_method.cloud_method()
     for dir in dirs:
         print(dir)
-        if "cose_6" not in dir:
-            continue
         try:
             # pcdファイルの情報を取得
             pcd_info_list = get_pcd_information.get_pcd_information()
@@ -40,24 +38,14 @@ for sec in sec_list:
             ax_set = plot.set_plot()
             ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=150)
 
-            area_path_2d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_points_list/2d/{sec}s/{pcd_info_list.dir_name}"
-            center_path_2d = f"/Users/kai/大学/小川研/LiDAR_step_length/remove_noize_data/time_area_center_point_list/2d/{sec}s/{pcd_info_list.dir_name}"
-            time_area_points_list_2d, time_area_center_point_list_2d = ori_method.load_original_data(area_path_2d, center_path_2d)
-
-            gif = create_gif.create_gif(True)
+            gif = create_gif.create_gif(False)
             for time_idx, cloud in enumerate(pcd_info_list.cloud_list):
                 points = np.array(cloud)
                 fig = plt.figure()
-                ax1 = fig.add_subplot(121)
+                ax = fig.add_subplot(121)
                 title = f"{pcd_info_list.dir_name}_{sec}s_{time_idx}"
-                ax1 = ax_set.set_ax(ax1, title=title)
-                ax1.scatter(points[:, 0], points[:, 1], s=1, c="b")
-
-                ax2 = fig.add_subplot(122)
-                ax2 = ax_set.set_ax(ax2, title=title)
-                for group_idx in range(len(time_area_points_list_2d[time_idx])):
-                    points = time_area_points_list_2d[time_idx][group_idx]
-                    ax2.scatter(points[:, 0], points[:, 1], s=1, c="b")
+                ax = ax_set.set_ax(ax, title=title)
+                ax.scatter(points[:, 0], points[:, 1], s=1, c="b")
 
                 plt.show()
                 gif.save_fig(fig)
