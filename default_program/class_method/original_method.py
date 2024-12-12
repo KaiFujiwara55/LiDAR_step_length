@@ -120,6 +120,7 @@ class cloud_method:
         引数:
             cloud: pcl.PointCloud
             radius: int
+            count_threshold: int
         返り値:
             area_points_list: list
             area_center_point_list: list
@@ -149,7 +150,7 @@ class cloud_method:
             # 領域内の点群のインデックスを取得
             under_idx = indicesm[idx, np.where(sqr_distances[idx]<radius**2)[0]]
 
-            # 点群数が100未満の場合 or すでにピックアップされた点群を含む場合はスキップ
+            # 点群数がcount_threshold未満の場合 or すでにピックアップされた点群を含む場合はスキップ
             if len(under_idx)<count_threshold:
                 continue
             elif not np.all(np.isin(under_idx, reserve_points_idx)):
@@ -400,15 +401,18 @@ class cloud_method:
                 x = [point[0] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
                 y = [point[1] for point in integraded_area_center_point_list[group_idx] if len(point)>0]
 
-                res = np.polyfit(x, y, 1)
+                group_points = [x for x in integraded_area_center_point_list[group_idx] if len(x)>0]
+                vector = group_points[-1]-group_points[0]
                 if len(fit_list)==0:
-                    fit_list.append(res[0])
+                    fit_list.append(vector)
                     time_idx_list = time_idxs
                     x_list = x
                     y_list = y
                 else:
-                    if abs(fit_list[-1]-res[0])<1:
-                        fit_list.append(res[0])
+                    # 2つのベクトルの成す角を取得
+                    theta = np.arccos(np.inner(fit_list[-1], vector)/(np.linalg.norm(fit_list[-1])*np.linalg.norm(vector)))
+                    if theta<np.deg2rad(45):
+                        fit_list.append(vector)
                         time_idx_list += time_idxs
                         x_list += x
                         y_list += y
