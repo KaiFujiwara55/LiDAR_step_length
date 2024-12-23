@@ -1,8 +1,10 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from tqdm import tqdm
 
+sys.path.append("/Users/kai/大学/小川研/LiDAR_step_length")
 from default_program.class_method import get_pcd_information
 from default_program.class_method import default_method
 from default_program.class_method import original_method
@@ -24,7 +26,7 @@ def extract_points(cloud, x_min, x_max, y_min, y_max):
 sec_list = ["0025"]
 
 for sec in sec_list:
-    active_folder_list = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/pcd_{sec}s/2d/*")
+    active_folder_list = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241218/pcd_{sec}s/2d/*")
     for active_folder in active_folder_list:
         print(active_folder)
 

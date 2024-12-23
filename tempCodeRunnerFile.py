@@ -1,0 +1,7 @@
+fig = plt.figure()
+# ax = fig.add_subplot(111)
+# ax.plot(x, y)
+# ax.set_xlim(-10, 10)
+# ax.set_ylim(-10, 10)
+# plt.show()
+# plt.close()

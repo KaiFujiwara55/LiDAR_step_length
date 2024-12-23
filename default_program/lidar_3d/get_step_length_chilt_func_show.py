@@ -21,7 +21,7 @@ ori_method = original_method.cloud_method()
 # plotの設定
 set_ax = plot.set_plot()
 
-def get_step(sec_1, sec_2, dir, plt_flg=False):
+def get_step(sec_1, sec_2, dir, distance_threshold, judge_move_threshold, plt_flg=False):
     pcd_info_list = get_pcd_information.get_pcd_information()
     pcd_info_list.load_pcd_dir(dir)
 
@@ -33,20 +33,29 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
     time_area_points_list, time_area_center_point_list = ori_method.load_original_data(area_path, center_path)
 
     # 点群をグループ化
-    integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5, distance_threshold=500)
+    integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5, distance_threshold=distance_threshold)
     # 中心点の軌跡から新たにグループを作成
     cloud_folder_path = dir.replace(str(sec_1).replace(".", "")+"s", str(sec_2).replace(".", "")+"s")
-    integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, is_incline=False)
+    integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, judge_move_threshold=judge_move_threshold, is_incline=False)
     height_list = ori_method.get_height_all(integraded_area_points_list, top_percent=0.1)
     collect_theta_z_list = ori_method.get_collect_theta_z(integraded_area_center_point_list)
 
     peak_list_list = []
     step_length_list_list = []
-    move_flg_list = ori_method.judge_move(integraded_area_center_point_list)
+    move_flg_list = ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list))
+    start_point_list = []
+    end_point_list = []
     for group_idx in range(len(move_flg_list)):
+        print(group_idx, move_flg_list[group_idx])
         height = height_list[group_idx]
+
+        start_point_list.append(integraded_area_center_point_list[group_idx][0])
+        end_point_list.append(integraded_area_center_point_list[group_idx][-1])
         if move_flg_list[group_idx]:
             chilt_list = []
+            # if plt_flg:
+            #     gif = create_gif.create_gif()
+            points_num_list = []
             for time_idx in range(len(integraded_area_points_list[group_idx])):
                 points = integraded_area_points_list[group_idx][time_idx]
                 center_point = integraded_area_center_point_list[group_idx][time_idx]
@@ -56,9 +65,11 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
                 points = def_method.rotate_points(points, theta_z=collect_theta_z_list[group_idx])
                 center_point = def_method.rotate_points(center_point, theta_z=collect_theta_z_list[group_idx])
 
-                bench_points = points[(points[:, 2]>height*0.5) & (points[:, 2]<height-30)]
+                bench_points = points[points[:, 2]>height*0.5]
                 normarized_points = ori_method.normalization_points(bench_points, center_point)
                 
+                points_num_list.append([time_idx, len(normarized_points)])
+
                 if len(normarized_points)==0:
                     continue
 
@@ -67,6 +78,19 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
                 x = np.linspace(-250, 250, 100)
                 y = cofficient[0]*x + cofficient[1]
                 chilt_list.append([time_idx, cofficient[0]])
+                
+                # 体の傾きをプロット
+                if plt_flg:
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111)
+                    ax = set_ax.set_ax(ax, title=pcd_info_list.dir_name+"_polyfit_time:"+str(time_idx), xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", xlim=[-250, 250], ylim=[-250, 250])
+                    ax.scatter(normarized_points[:, 0], normarized_points[:, 1], s=1)
+                    ax.plot(x, y, c="r")
+                    plt.show()
+                    # gif.save_fig(fig)
+                    plt.close()
+            # if plt_flg:
+            #     gif.create_gif("/Users/kai/大学/小川研/LiDAR_step_length/gif/time_area/"+pcd_info_list.dir_name+".gif")
 
             # chilt_listを平均0で正規化
             standard_chilt_list = np.array(chilt_list)
@@ -87,7 +111,7 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
                     if len(peak_list)==0:
                         before_point = integraded_area_center_point_list[group_idx][before_time_idx]
                         after_point = integraded_area_center_point_list[group_idx][after_time_idx]
-                        point = before_point + (after_point-before_point)/((peak_time_idx-before_time_idx)/(after_time_idx-before_time_idx))
+                        point = before_point + (after_point-before_point)*((peak_time_idx-before_time_idx)/(after_time_idx-before_time_idx))
                         peak_list.append([peak_time_idx, point])
                     else:
                         before_point = integraded_area_center_point_list[group_idx][before_time_idx]
@@ -100,10 +124,10 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
             if plt_flg:
                 fig = plt.figure()
                 ax = fig.add_subplot(111)
-                ax = set_ax.set_ax(ax, title=pcd_info_list.dir_name+"_chilt",xlabel="time (ms)", ylabel="chilt", xlim=[0, np.max(standard_chilt_list)*25], ylim=[np.min(standard_chilt_list[:, 1]), np.max(standard_chilt_list[:, 1])], is_box_aspect=False)
-                ax.plot(standard_chilt_list[:, 0]*25, standard_chilt_list[:, 1])
+                ax = set_ax.set_ax(ax, title=pcd_info_list.dir_name+"_chilt",xlabel="time (ms)", ylabel="chilt", xlim=[0, np.max(standard_chilt_list)*100], ylim=[np.min(standard_chilt_list[:, 1]), np.max(standard_chilt_list[:, 1])], is_box_aspect=False)
+                ax.plot(standard_chilt_list[:, 0]*100, standard_chilt_list[:, 1])
                 for peak in peak_list:
-                    ax.scatter(peak[0]*25, 0, c="r", s=5)
+                    ax.scatter(peak[0]*100, 0, c="r", s=5)
                 plt.show()
                 plt.close()
 
@@ -116,5 +140,4 @@ def get_step(sec_1, sec_2, dir, plt_flg=False):
             peak_list_list.append(peak_list)
             step_length_list_list.append(step_length_list)
 
-    return peak_list_list, step_length_list_list
-
+    return peak_list_list, step_length_list_list, start_point_list, end_point_list

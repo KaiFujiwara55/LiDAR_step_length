@@ -19,17 +19,18 @@ ori_method = original_method.cloud_method()
 
 sec_list = ["01"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241218/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/3d/*")
     
     for dir in dirs:
+        # スキップしない対象
+        if "cose_7_1_f" not in dir:
+            continue
+        
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
 
-        # スキップする対象
-        if "cose_3" not in dir:
-            continue
         
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")        
         # plot用のaxのdefault設定
@@ -49,7 +50,8 @@ for sec in sec_list:
             fig = plt.figure()
             ax1 = fig.add_subplot(121)
             ax1 = ax_set.set_ax(ax1, title="raw_points")
-            ax1.scatter(points[:, 0], points[:, 1], s=1, c="b")
+            # ax1.scatter(points[:, 0], points[:, 1], s=1, c="b")
+            ax1.scatter(points[(points[:, 2]>300)&(points[:, 2]<1700)][:, 0], points[(points[:, 2]>300)&(points[:, 2]<1700)][:, 1], s=1, c="b")
             ax2 = fig.add_subplot(122)
             ax2 = ax_set.set_ax(ax2, title="remove_noize_points")
             for group_idx in range(len(time_area_points_list_2d[time_idx])):

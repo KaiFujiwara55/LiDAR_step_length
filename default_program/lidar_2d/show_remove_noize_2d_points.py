@@ -19,10 +19,14 @@ ori_method = original_method.cloud_method()
 
 sec_list = ["0025"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241218/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/2d/*")
     
     for dir in dirs:
+        # # スキップしない対象
+        if "cose_7_1_f" not in dir:
+            continue
+
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)

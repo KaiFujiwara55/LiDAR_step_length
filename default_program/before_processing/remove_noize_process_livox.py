@@ -16,7 +16,7 @@ from default_program.class_method import create_gif
 sec_list = ["01"]
 correction_height = 1300
 for sec in sec_list:
-    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/pcd_{sec}s/3d/*")
+    dirs = glob.glob(f"/Users/kai/大学/小川研/LiDAR_step_length/20241218/pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
@@ -94,7 +94,7 @@ for sec in sec_list:
                 time_area_center_point_list.append([])
             else:
                 # 領域内の点群を取得
-                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(statistical_filtered_cloud, radius=250)
+                area_points_list, area_center_point_list = ori_method.get_neighborhood_points(statistical_filtered_cloud, radius=250, count_threshold=50)
 
                 # 時系列の点群を保存
                 time_cloud.append(statistical_filtered_cloud)

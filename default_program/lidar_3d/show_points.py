@@ -1,10 +1,12 @@
 import os
+import sys
 import numpy as np
 import pcl
 import glob
 import time
 import matplotlib.pyplot as plt
 
+sys.path.append("/Users/kai/大学/小川研/LiDAR_step_length")
 from default_program.class_method import plot
 from default_program.class_method import default_method
 from default_program.class_method import original_method
@@ -13,15 +15,16 @@ from default_program.class_method import create_gif
 
 sec_list = ["01"]
 for sec in sec_list:
-    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241204/"
+    dir_path = f"/Users/kai/大学/小川研/LiDAR_step_length/20241218/"
     dirs = glob.glob(f"{dir_path}pcd_{sec}s/3d/*")
 
     # ノイズ除去のクラスをインスタンス化
     def_method = default_method.cloud_method()
     ori_method = original_method.cloud_method()
     for dir in dirs:
-        if "repeat" in dir:
+        if not "cose_5_1_y" in dir:
             continue
+        
         # pcdファイルの情報を取得
         pcd_info_list = get_pcd_information.get_pcd_information()
         pcd_info_list.load_pcd_dir(dir)
@@ -29,8 +32,6 @@ for sec in sec_list:
         ax_set = plot.set_plot()
         ax_set.set_ax_info(title="title", xlabel="X", ylabel="Y", zlabel="Z", xlim=(pcd_info_list.get_all_min()[0], pcd_info_list.get_all_max()[0]), ylim=(pcd_info_list.get_all_min()[1], pcd_info_list.get_all_max()[1]), zlim=(pcd_info_list.get_all_min()[2], pcd_info_list.get_all_max()[2]), azim=180)
         
-        if ("cose_3_1_t" not in dir and "cose_4_1_f" not in dir and "cose_6_0_f" not in dir and "cose_6_0_y" not in dir):
-            continue
 
         print(f"処理開始 : {pcd_info_list.dir_name}_{sec}s")
         # 処理結果を読み込み
@@ -55,17 +56,21 @@ for sec in sec_list:
         #     plt.close()
 
         # 点群をグループ化
-        integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5)
+        #######
+        integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list(time_area_points_list, time_area_center_point_list, integrade_threshold=5, distance_threshold=250)
 
         # 中心点の軌跡から新たにグループを作成
         sec_2 = 0.1
         cloud_folder_path = dir_path+"pcd_"+str(sec_2).replace(".", "")+"s/3d/"+pcd_info_list.dir_name
-        integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, is_incline=False)
-        move_flg_list = ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list))
+        integraded_area_points_list, integraded_area_center_point_list = ori_method.grouping_points_list_2(integraded_area_points_list, integraded_area_center_point_list, cloud_folder_path, sec=sec_2, judge_move_threshold=750, is_incline=False)
+        move_flg_list = ori_method.judge_move(ori_method.get_vector(integraded_area_center_point_list), threshold=500)
+        print(move_flg_list)
+        #########
 
         gif = create_gif.create_gif(False)
         for group_idx in range(len(integraded_area_points_list)):
-            if move_flg_list[group_idx]:
+            # if move_flg_list[group_idx]:
+            if True:
                 for time_idx in range(len(integraded_area_points_list[0])):
                     points = integraded_area_points_list[group_idx][time_idx]
                     center_point = integraded_area_center_point_list[group_idx][time_idx]
@@ -79,7 +84,7 @@ for sec in sec_list:
                         plt.show()
                         gif.save_fig(fig)
                         plt.close()
-        output_path = "/Users/kai/大学/小川研/LiDAR_step_length/gif/3d_raw_cloud/"+pcd_info_list.dir_name+".gif"
+        output_path = "/Users/kai/大学/小川研/LiDAR_step_length/gif/tmp/"+pcd_info_list.dir_name+".gif"
         gif.create_gif(output_path, duration=0.1)
         continue
         # 時系列ごとでの点群表示
